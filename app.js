@@ -308,18 +308,6 @@
     btn.innerHTML = `<span aria-hidden="true">＋</span> ${config.label}`;
   }
 
-  // --- Аналітика (GoatCounter): «віртуальні» перегляди розділів і події користувача.
-  // Перший показ /index.html GoatCounter рахує сам при завантаженні скрипта, тож тут
-  // трекаємо лише подальші переходи між розділами (URL у цьому SPA не змінюється,
-  // тому без ручного виклику Cloudflare/GoatCounter побачили б лише одне завантаження
-  // на весь сеанс). Cloudflare Web Analytics власного API для таких подій не має.
-  function trackPageView(page) {
-    window.goatcounter?.count?.({ path: `/${page}`, title: document.title, event: false });
-  }
-  function trackEvent(name) {
-    window.goatcounter?.count?.({ path: `event:${name}`, title: name, event: true });
-  }
-
   function showPage(page) {
     renderAll();
     $$('.page').forEach(item => item.classList.toggle('active', item.id === page));
@@ -330,7 +318,6 @@
     });
     $('#heading').textContent = ({ home: 'Твій навчальний простір', schedule: 'Твій навчальний тиждень', tasks: 'Не пропусти дедлайни', files: 'Твоя база знань', academic: 'Знай терміни наперед', authors: 'Команда проєкту', support: 'Ми тут, щоб допомогти' })[page];
     updateTopbarAddButton(page);
-    trackPageView(page);
     setSidebarOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -366,7 +353,7 @@
   $$('.filter').forEach(button => button.addEventListener('click', () => { taskFilter = button.dataset.filter; $$('.filter').forEach(item => { item.classList.toggle('active', item === button); item.setAttribute('aria-pressed', String(item === button)); }); renderTasks(); }));
   $('#search-files').addEventListener('input', event => renderFiles(event.target.value));
   $('#search-tasks').addEventListener('input', renderTasks);
-  $('#task-list').addEventListener('change', event => { const id = event.target.dataset.done; if (!id) return; const task = data.tasks.find(item => String(item.id) === id); if (task) { task.done = event.target.checked; trackEvent(task.done ? 'task-complete' : 'task-uncomplete'); save(); renderAll(); } });
+  $('#task-list').addEventListener('change', event => { const id = event.target.dataset.done; if (!id) return; const task = data.tasks.find(item => String(item.id) === id); if (task) { task.done = event.target.checked; save(); renderAll(); } });
 
   // Клацання по картці відкриває редагування; клацання по кнопці видалення/відкриття PDF — свою дію.
   document.addEventListener('click', async event => {
@@ -383,7 +370,6 @@
         if (file?.pdfId) await deletePdf(file.pdfId);
         data.files = data.files.filter(item => String(item.id) !== removeFile);
       }
-      trackEvent(`${removeLesson ? 'lesson' : removeTask ? 'task' : 'file'}-delete`);
       save(); renderAll(); return;
     }
     const pdfId = event.target.dataset.openPdf;
@@ -432,7 +418,6 @@
       }
       if (existing) Object.assign(existing, record); else data.files.push(record);
     }
-    trackEvent(`${type}-${existing ? 'edit' : 'add'}`);
     save(); closeModal(); renderAll();
   });
 
@@ -484,7 +469,6 @@
 
   // Резервне копіювання / відновлення всіх даних (тексту; вкладені PDF лишаються у сховищі цього браузера).
   $('#export-data').addEventListener('click', async () => {
-    trackEvent('data-export');
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     await shareOrDownloadFile(blob, `student-hub-backup-${todayISO()}.json`, 'Резервна копія Student Hub', 'Повна резервна копія даних Student Hub.');
   });
@@ -495,7 +479,7 @@
       const parsed = JSON.parse(await file.text());
       if (!Array.isArray(parsed.lessons) || !Array.isArray(parsed.tasks) || !Array.isArray(parsed.files)) throw new Error('bad shape');
       if (!confirm('Імпорт замінить поточні дані на дані з файлу. Продовжити?')) return;
-      data = parsed; trackEvent('data-import'); save(); renderAll();
+      data = parsed; save(); renderAll();
     } catch { alert('Не вдалося прочитати файл — переконайся, що це резервна копія Student Hub.'); }
     event.target.value = '';
   });
@@ -611,18 +595,16 @@
   }
   function scheduleICSBlob() { return new Blob([generateICS()], { type: 'text/calendar;charset=utf-8' }); }
   $('#share-schedule')?.addEventListener('click', async () => {
-    if (shareFormat === 'pdf') { trackEvent('share-schedule-pdf'); printSchedule(); return; }
+    if (shareFormat === 'pdf') { printSchedule(); return; }
     if (!data.lessons.length) { alert('Спочатку додай хоча б одну пару до розкладу.'); return; }
-    trackEvent(`share-schedule-${shareFormat}`);
     const isIcs = shareFormat === 'ics';
     const blob = isIcs ? scheduleICSBlob() : scheduleJSONBlob();
     const filename = isIcs ? 'student-hub-schedule.ics' : `student-hub-schedule-${todayISO()}.json`;
     await shareOrDownloadFile(blob, filename, 'Мій розклад — Student Hub', 'Ось мій розклад занять зі Student Hub.');
   });
   $('#download-schedule')?.addEventListener('click', () => {
-    if (shareFormat === 'pdf') { trackEvent('download-schedule-pdf'); printSchedule(); return; }
+    if (shareFormat === 'pdf') { printSchedule(); return; }
     if (!data.lessons.length) { alert('Спочатку додай хоча б одну пару до розкладу.'); return; }
-    trackEvent(`download-schedule-${shareFormat}`);
     const isIcs = shareFormat === 'ics';
     downloadBlob(isIcs ? scheduleICSBlob() : scheduleJSONBlob(), isIcs ? 'student-hub-schedule.ics' : `student-hub-schedule-${todayISO()}.json`);
   });
@@ -655,7 +637,6 @@
   }
   $('#generate-share-link')?.addEventListener('click', () => {
     if (!data.lessons.length) { alert('Спочатку додай хоча б одну пару до розкладу.'); return; }
-    trackEvent('generate-share-link');
     $('#share-link-output').value = buildImportLink();
     $('#copy-share-link').disabled = false;
     $('#share-share-link').disabled = false;
@@ -764,8 +745,6 @@
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
   }
-  // Скільки людей насправді встановлюють Student Hub як застосунок (не лише відкривають у браузері).
-  window.addEventListener('appinstalled', () => trackEvent('pwa-installed'));
 
   $('#date-label').textContent = `${fullDays[new Date().getDay()].toUpperCase()} · STUDY MODE`;
   applyDurationUI();

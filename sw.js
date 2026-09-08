@@ -1,4 +1,4 @@
-const CACHE_NAME = 'student-hub-v12';
+const CACHE_NAME = 'student-hub-v11';
 const ASSETS = [
   './',
   './index.html',
@@ -34,6 +34,10 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
+
+  // Не чіпаємо кросдоменні запити (Google Analytics тощо) — хай браузер
+  // обробляє їх сам, без кешування в SW.
+  if (!request.url.startsWith(self.location.origin)) return;
 
   if (request.mode === 'navigate') {
     event.respondWith(
