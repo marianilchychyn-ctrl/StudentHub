@@ -199,6 +199,25 @@
   <div id="print-schedule-root" class="print-only" aria-hidden="true"></div>
   <div class="modal-wrap" id="modal-wrap" aria-hidden="true"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="close" id="modal-close" aria-label="Закрити">×</button><p class="micro" id="modal-kicker">NEW ENTRY</p><h2 id="modal-title">Новий запис</h2><form id="entry-form"></form></section></div>
   <template id="empty-state"><div class="empty"><span aria-hidden="true">◌</span><b>Тут поки порожньо</b><p>Додай перший запис кнопкою вище.</p></div></template>
+  <!-- ==========================================================================
+       АНАЛІТИКА
+       Cloudflare Web Analytics — загальна відвідуваність (унікальні відвідувачі,
+       перегляди, реферери, країни, пристрої, швидкість завантаження). Замініть
+       CF_TOKEN на токен зі свого дашборду dash.cloudflare.com → Web Analytics.
+       "spa": true потрібен на випадок майбутньої підтримки History API, але
+       перемикання розділів тут не змінює URL — тому детальну статистику по
+       розділах і діях користувача веде GoatCounter нижче.
+  =========================================================================== -->
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token": "CF_TOKEN", "spa": true}'></script>
+
+  <!-- GoatCounter — детальна аналітика: перегляди кожного розділу SPA
+       (Огляд/Розклад/Завдання/...) і події (додав пару, виконав завдання,
+       експорт/імпорт, поділився розкладом тощо). Замініть GC_CODE на свій
+       код із goatcounter.com (напр. student-hub.goatcounter.com → GC_CODE = student-hub). -->
+  <script data-goatcounter="https://GC_CODE.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
+
   <script src="app.js" defer></script>
 </body>
 </html>
