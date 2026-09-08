@@ -31,12 +31,9 @@
   const isOverdue = item => !item.done && item.due && item.due < todayISO();
   function showEmpty(node) { node.append($('#empty-state').content.cloneNode(true)); }
 
-  // --- Тривалість пари (за замовчуванням 1 год 30 хв) — використовується таймером, прогрес-баром і .ics-експортом ---
   const DEFAULT_LESSON_DURATION = 90;
   let lessonDuration = Number(localStorage.getItem('student-hub-duration')) || DEFAULT_LESSON_DURATION;
 
-  // Розбирає рядок часу пари: повертає {start:{h,m}, end:{h,m}}. Якщо вказано лише початок — кінець
-  // обчислюється додаванням поточної налаштованої тривалості пари.
   function parseLessonRange(text) {
     const matches = [...String(text || '').matchAll(/(\d{1,2}):(\d{2})/g)];
     if (!matches.length) return null;
