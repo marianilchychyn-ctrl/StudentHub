@@ -1,0 +1,123 @@
+/* =====================================================================
+   REFINEMENTS LAYER — виправлення реальних багів верстки + доробка
+   дизайну сторінки «Розклад». Підключається останнім, тож надійно
+   перебиває конфліктні правила з попередніх трьох шарів.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   ФІКС: кнопка «Сьогодні» мала ховатися на мобільних (.outline-button
+   {display:none} у style.css), але polish.css пізніше й з тією ж
+   специфічністю повертає їй display:inline-flex — через це на вузьких
+   екранах кнопка вилазить і обрізає «+ Додати» до «Дода…».
+   Тут та сама специфічність, але файл підключений останнім —
+   і додатково звужуємо селектор до .topbar, щоби напевно перемогти.
+--------------------------------------------------------------------- */
+@media (max-width: 610px) {
+  .topbar .outline-button { display: none; }
+}
+
+/* ---------------------------------------------------------------------
+   ФІКС: у розгорнутому мобільному меню текст лого стає невидимим —
+   правило .logo>span:last-child{font-size:0} з планшетного брейкпоінта
+   (900px) не скидається назад у .sidebar.open (610px), лишається 0.
+--------------------------------------------------------------------- */
+@media (max-width: 610px) {
+  .sidebar.open .logo > span:last-child { font-size: 16px; }
+}
+
+/* ---------------------------------------------------------------------
+   Кнопка «+ Додати» в шапці тепер контекстна (див. app.js): на
+   сторінках без релевантної дії (Автори, Підтримка, Графік навчання)
+   вона ховається через атрибут hidden. Але .primary-button{display:
+   inline-flex} з polish.css переважає стандартне [hidden]{display:
+   none} з UA-стилів (авторські стилі завжди сильніші за стилі
+   браузера) — тому явно фіксуємо приховування іменованим селектором.
+--------------------------------------------------------------------- */
+#topbar-add-btn[hidden] { display: none; }
+
+/* ---------------------------------------------------------------------
+   Топбар на вузьких екранах: дозволяємо переносити кнопки на новий
+   рядок замість того, щоб покладатися лише на стиснення — це
+   підстраховка від обрізання тексту, якщо колись з'явиться довший
+   заголовок або менший екран.
+--------------------------------------------------------------------- */
+@media (max-width: 610px) {
+  .topbar { flex-wrap: wrap; row-gap: 10px; }
+  .topbar > div { flex: 1 1 auto; min-width: 0; }
+}
+
+/* =======================================================================
+   Сторінка «Розклад»: згорнуті інструменти (details/summary)
+   ======================================================================= */
+.schedule-tools-title { margin-top: 28px; }
+
+details.panel > summary.panel-title {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  list-style: none;
+}
+details.panel > summary.panel-title::-webkit-details-marker { display: none; }
+details.panel > summary.panel-title::marker { content: ''; }
+
+details.panel > summary.panel-title::after {
+  content: '';
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform .25s ease, border-color .2s ease;
+  margin-left: 12px;
+}
+details.panel[open] > summary.panel-title::after {
+  transform: rotate(-135deg);
+  border-color: var(--blue);
+}
+details.panel > summary.panel-title:hover::after { border-color: var(--blue); }
+
+/* Коли деталі закриті — трохи менше "повітря" знизу, аби рядок
+   виглядав як компактна кнопка-перемикач, а не порожня панель */
+details.panel:not([open]) { padding-bottom: 21px; }
+
+/* Плавна поява вмісту при розгортанні */
+details.panel[open] > *:not(summary) { animation: detailsIn .25s ease both; }
+@keyframes detailsIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  details.panel > summary.panel-title::after { transition: none; }
+  details.panel[open] > *:not(summary) { animation: none; }
+}
+
+/* =======================================================================
+   Дрібна допомога: чіткіше видно, що заголовок таймера пари вже не
+   останній елемент перед списком — трохи більше відступу над
+   першим списком нижче таймера/панелі "наступна пара"
+   ======================================================================= */
+.pair-timer + .home-grid { margin-top: 4px; }
+
+/* =======================================================================
+   Кнопка-посилання на Telegram-канал у банері на головній
+   ======================================================================= */
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.telegram-button {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #8bd9ff;
+  border-color: #2c8bbf60;
+  background: #101927cc;
+}
+.telegram-button:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+  box-shadow: 0 0 20px var(--cyan-glow, rgba(70,182,255,.26));
+}
+.telegram-button span[aria-hidden] { font-size: 15px; line-height: 1; }
+
+@media (max-width: 610px) {
+  .hero-actions { width: 100%; }
+  .hero-actions .telegram-button { flex: 1; justify-content: center; }
+}

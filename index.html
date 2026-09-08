@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#070b14">
+  <meta name="description" content="Student Hub — розклад, дедлайни та матеріали">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="design-upgrade.css">
+  <link rel="stylesheet" href="polish.css">
+  <link rel="stylesheet" href="refinements.css">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>Student Hub</title>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Перейти до основного вмісту</a>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="app">
+    <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+    <aside class="sidebar" id="sidebar">
+      <a class="logo" href="#" id="logo-home-link" data-page-link="home"><span class="logo-code" aria-hidden="true">&lt;/&gt;</span><span>STUDENT<br><b>HUB</b></span></a>
+      <nav class="nav" aria-label="Навігація">
+        <button class="nav-btn active" data-page="home" aria-current="page"><i aria-hidden="true">▦</i> Огляд</button>
+        <button class="nav-btn" data-page="schedule"><i aria-hidden="true">◫</i> Розклад</button>
+        <button class="nav-btn" data-page="tasks"><i aria-hidden="true">✓</i> Завдання <em id="task-counter">0</em></button>
+        <button class="nav-btn" data-page="files"><i aria-hidden="true">▤</i> Матеріали</button>
+        <button class="nav-btn" data-page="academic"><i aria-hidden="true">▥</i> Графік навчання</button>
+        <button class="nav-btn" data-page="authors"><i aria-hidden="true">☺</i> Автори</button>
+        <button class="nav-btn" data-page="support"><i aria-hidden="true">?</i> Підтримка</button>
+      </nav>
+      <div class="data-actions">
+        <button class="data-btn" id="export-data" title="Зберегти резервну копію"><span aria-hidden="true">⇩</span> Експорт</button>
+        <button class="data-btn" id="import-data" title="Відновити з файлу"><span aria-hidden="true">⇧</span> Імпорт</button>
+        <input type="file" id="import-input" accept="application/json,.json" hidden>
+      </div>
+      <p class="system"><span aria-hidden="true"></span> SYSTEM ONLINE</p>
+    </aside>
+
+    <main id="main-content" tabindex="-1">
+      <header class="topbar">
+        <button class="hamburger" id="menu-toggle" aria-label="Відкрити меню" aria-expanded="false" aria-controls="sidebar">☰</button>
+        <div><p class="micro" id="date-label">ЗАВАНТАЖЕННЯ...</p><h1 id="heading">Твій навчальний простір</h1></div>
+        <button class="outline-button" id="go-today">Сьогодні</button>
+        <button class="primary-button" id="topbar-add-btn" data-modal="lesson"><span aria-hidden="true">＋</span> Додати пару</button>
+      </header>
+
+      <section class="page active" id="home">
+        <article class="hero">
+          <div><p class="micro glow">// STUDY MODE ACTIVE</p><h2>Плануй. Вчися.<br><strong>Досягай більшого.</strong></h2><p class="hero-copy">Розклад, домашні завдання й усі потрібні матеріали в одному цифровому хабі.</p><div class="hero-actions"><button class="primary-button" data-modal="lesson">Додати пару <b>→</b></button><a class="outline-button telegram-button" href="https://t.me/+tHk6q3rxZZE5NzE6" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">✈</span> Наш Telegram</a></div></div>
+          <div class="terminal-art" aria-hidden="true"><span>{</span><div><small>SEMESTER</small><b>01</b><small>READY_</small></div><span>}</span></div>
+        </article>
+        <div class="metrics">
+          <article><span class="metric-icon blue" aria-hidden="true">◫</span><div><b id="lessons-today">0</b><p>Пар сьогодні</p></div></article>
+          <article><span class="metric-icon green" aria-hidden="true">✓</span><div><b id="tasks-open">0</b><p>Активних завдань</p></div></article>
+          <article><span class="metric-icon violet" aria-hidden="true">▤</span><div><b id="file-count">0</b><p>Матеріалів</p></div></article>
+        </div>
+        <article class="panel pair-timer" id="pair-timer"></article>
+        <div class="home-grid">
+          <article class="panel"><div class="panel-title"><div><p class="micro">НАСТУПНЕ</p><h2>Пари сьогодні</h2></div><button class="link-button" data-page-link="schedule">Розклад →</button></div><div id="today-list"></div></article>
+          <article class="panel"><div class="panel-title"><div><p class="micro">ДЕДЛАЙНИ</p><h2>Найближчі</h2></div><button class="link-button" data-page-link="tasks">Усі →</button></div><div id="deadline-list"></div></article>
+        </div>
+      </section>
+
+      <section class="page" id="schedule">
+        <div class="section-title"><div><p class="micro">WEEKLY OVERVIEW</p><h2>Розклад занять</h2></div><button class="primary-button" data-modal="lesson"><span aria-hidden="true">＋</span> Нова пара</button></div>
+        <div class="week-switch" role="group" aria-label="Оберіть тип навчального тижня">
+          <span>ТИЖДЕНЬ:</span><button class="week-choice active" data-week="numerator" aria-pressed="true">Чисельник</button><button class="week-choice" data-week="denominator" aria-pressed="false">Знаменник</button>
+        </div>
+        <div class="day-tabs" id="day-tabs" role="group" aria-label="Дні тижня"></div>
+        <div class="schedule-board" id="schedule-board"></div>
+
+        <div class="section-title schedule-tools-title"><div><p class="micro">TOOLS</p><h2>Інструменти розкладу</h2></div></div>
+        <details class="panel calendar-sync">
+          <summary class="panel-title"><div><p class="micro">SHARE · CALENDAR SYNC</p><h2>Поділитися розкладом</h2></div></summary>
+          <p>Обери формат і поділись розкладом із другом або збережи його собі. На телефоні кнопка «Поділитися» відкриє звичайне меню «Надіслати» (Telegram, Viber, повідомлення, AirDrop тощо).</p>
+          <div class="week-switch" role="group" aria-label="Формат для поширення" id="share-format">
+            <span>ФОРМАТ:</span>
+            <button type="button" class="week-choice share-format-choice active" data-format="ics" aria-pressed="true">.ics (календар)</button>
+            <button type="button" class="week-choice share-format-choice" data-format="json" aria-pressed="false">.json (для Student Hub)</button>
+            <button type="button" class="week-choice share-format-choice" data-format="pdf" aria-pressed="false">PDF (друк)</button>
+          </div>
+          <div class="calendar-sync-actions">
+            <button class="primary-button" id="share-schedule" title="Поділитися розкладом через меню «Надіслати»"><span aria-hidden="true">📤</span> Поділитися розкладом</button>
+            <button class="outline-button" id="download-schedule" title="Завантажити файл без меню «Надіслати»"><span aria-hidden="true">⇩</span> Завантажити файл</button>
+          </div>
+          <p class="hint" id="share-format-hint">.ics відкривається одним кліком у Google Calendar, Apple Calendar та Outlook. Пари з позначкою «Чисельник»/«Знаменник» додаються як події раз на два тижні, «Щотижня» — як щотижневі.</p>
+          <p class="hint">Google Calendar: Налаштування → Імпорт і експорт → обери файл .ics. Apple Calendar: двічі клацни на завантажений файл. Outlook: Файл → Відкрити й експортувати → Імпорт/експорт → Імпорт файлу iCalendar. PDF: у вікні друку обери «Зберегти як PDF» — на iPhone там-таки є кнопка «Поділитися».</p>
+          <div class="share-link-row">
+            <button class="outline-button" id="generate-share-link" title="Створити посилання-запрошення з розкладом усередині"><span aria-hidden="true">🔗</span> Створити посилання-запрошення</button>
+            <input type="text" id="share-link-output" placeholder="Посилання з'явиться тут" readonly aria-label="Посилання-запрошення для імпорту розкладу">
+            <button class="outline-button" id="copy-share-link" disabled>Копіювати</button>
+            <button class="outline-button" id="share-share-link" disabled>Поділитися посиланням</button>
+          </div>
+          <p class="hint">Другу достатньо відкрити це посилання в браузері (навіть без встановленого Student Hub) — застосунок сам запропонує імпортувати розклад.</p>
+        </details>
+        <details class="panel calendar-sync schedule-import">
+          <summary class="panel-title"><div><p class="micro">IMPORT</p><h2>Імпортувати розклад</h2></div></summary>
+          <p>Заміни свій розклад чужим або додай пари з файлу .json / .ics, або встав отримане посилання-запрошення чи код із нього.</p>
+          <div class="calendar-sync-actions">
+            <button class="outline-button" id="import-schedule-btn" title="Обрати .json або .ics файл із розкладом"><span aria-hidden="true">⇧</span> Імпортувати з файлу (.json / .ics)</button>
+            <input type="file" id="import-schedule-input" accept=".json,.ics,application/json,text/calendar" hidden>
+          </div>
+          <div class="import-row">
+            <input type="text" id="import-link-value" placeholder="Встав посилання-запрошення або код" aria-label="Посилання або код для імпорту розкладу">
+            <button class="outline-button" id="import-link-btn">Імпортувати</button>
+          </div>
+        </details>
+        <details class="panel duration-settings">
+          <summary class="panel-title"><div><p class="micro">TIMER SETTINGS</p><h2>Тривалість пари</h2></div></summary>
+          <p>Використовується таймером пар і прогрес-баром, а також автоматично підставляється як час завершення, якщо в парі вказано лише час початку.</p>
+          <div class="duration-presets" id="duration-presets" role="group" aria-label="Готова тривалість пари">
+            <button type="button" class="week-choice duration-choice" data-duration="45" aria-pressed="false">45 хв</button>
+            <button type="button" class="week-choice duration-choice" data-duration="60" aria-pressed="false">1 год</button>
+            <button type="button" class="week-choice duration-choice" data-duration="80" aria-pressed="false">1 год 20 хв</button>
+            <button type="button" class="week-choice duration-choice" data-duration="90" aria-pressed="false">1 год 30 хв</button>
+            <button type="button" class="week-choice duration-choice" data-duration="95" aria-pressed="false">1 год 35 хв</button>
+            <button type="button" class="week-choice duration-choice" data-duration="120" aria-pressed="false">2 год</button>
+          </div>
+          <label class="field duration-custom"><span>Своя тривалість, хв</span><input type="number" id="duration-custom-input" min="10" max="240" step="5"></label>
+        </details>
+      </section>
+
+      <section class="page" id="tasks">
+        <div class="section-title"><div><p class="micro">DEADLINE CONTROL</p><h2>Домашні завдання</h2></div><button class="primary-button" data-modal="task"><span aria-hidden="true">＋</span> Нове завдання</button></div>
+        <div class="filters" role="group" aria-label="Фільтр завдань"><button class="filter active" data-filter="all" aria-pressed="true">Усі</button><button class="filter" data-filter="open" aria-pressed="false">Активні</button><button class="filter" data-filter="done" aria-pressed="false">Виконані</button><button class="filter" data-filter="overdue" aria-pressed="false">Прострочені</button></div>
+        <label class="search"><span aria-hidden="true">⌕</span><input id="search-tasks" type="search" placeholder="Пошук за назвою або предметом"></label>
+        <div class="task-grid" id="task-list"></div>
+      </section>
+
+      <section class="page" id="files">
+        <div class="section-title"><div><p class="micro">KNOWLEDGE BASE</p><h2>Матеріали</h2></div><button class="primary-button" data-modal="file"><span aria-hidden="true">＋</span> Додати матеріал</button></div>
+        <p class="storage-note">PDF зберігається локально у твоєму браузері — його ніхто не бачить.</p>
+        <label class="search"><span aria-hidden="true">⌕</span><input id="search-files" type="search" placeholder="Пошук за назвою або предметом"></label>
+        <div class="file-grid" id="file-list"></div>
+      </section>
+
+      <section class="page" id="academic">
+        <div class="section-title"><div><p class="micro">ACADEMIC CALENDAR · 2026/2027</p><h2>Графік навчального процесу</h2></div></div>
+        <div class="week-switch" role="group" aria-label="Оберіть семестр">
+          <span>СЕМЕСТР:</span><button class="week-choice semester-choice" data-semester="autumn" aria-pressed="false">Осінній</button><button class="week-choice semester-choice" data-semester="spring" aria-pressed="false">Весняний</button>
+        </div>
+        <div id="academic-content"></div>
+        <p class="hint academic-source">ННІ КНІТ · графік затверджено першим проректором з науково-педагогічної роботи Олександром Сушинським, погоджено керівником навчально-методичного відділу Романом Салабаєм, підписано директором ННІ КНІТ Ігорем Крошним.</p>
+      </section>
+
+      <section class="page" id="authors">
+        <div class="section-title"><div><p class="micro">TEAM</p><h2>Автори проєкту</h2></div></div>
+        <div class="home-grid">
+          <article class="panel author-card">
+            <span class="author-avatar" aria-hidden="true">ВК</span>
+            <div>
+              <h3>Копцюх Володимир</h3>
+              <p>Розробник проєкту Student Hub</p>
+              <a class="primary-button" href="https://t.me/Koptsyh" target="_blank" rel="noopener"><span aria-hidden="true">✈</span> Написати в Telegram</a>
+            </div>
+          </article>
+          <article class="panel author-card">
+            <span class="author-avatar" aria-hidden="true">МІ</span>
+            <div>
+              <h3>Ільчишин Мар'ян</h3>
+              <p>Розробник проєкту Student Hub</p>
+              <a class="primary-button" href="https://t.me/marjan4_uk" target="_blank" rel="noopener"><span aria-hidden="true">✈</span> Написати в Telegram</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" id="support">
+        <div class="section-title"><div><p class="micro">HELP CENTER</p><h2>Підтримка (Support)</h2></div></div>
+        <article class="panel">
+          <div class="panel-title"><div><p class="micro">FAQ</p><h2>Часті запитання</h2></div></div>
+          <div class="faq-list">
+            <details class="faq-item"><summary>Де зберігаються мої дані?</summary><p>Усі дані — розклад, завдання та PDF-матеріали — зберігаються локально у твоєму браузері й нікуди не надсилаються.</p></details>
+            <details class="faq-item"><summary>Як зробити резервну копію?</summary><p>Натисни «⇩ Експорт» у бічній панелі — завантажиться файл із твоїми даними. Щоб відновити дані, скористайся «⇧ Імпорт».</p></details>
+            <details class="faq-item"><summary>Як поділитися розкладом із другом?</summary><p>На сторінці «Розклад» обери формат (.ics, .json або PDF) і натисни «📤 Поділитися розкладом» — відкриється меню «Надіслати». Або створи «посилання-запрошення»: другу достатньо його відкрити, і застосунок запропонує імпортувати розклад автоматично.</p></details>
+            <details class="faq-item"><summary>Чому зникли PDF після переустановлення браузера?</summary><p>PDF-файли зберігаються у сховищі браузера (IndexedDB) і прив'язані до цього пристрою й браузера. Під час очищення даних браузера вони видаляються.</p></details>
+            <details class="faq-item"><summary>Застосунок не працює офлайн — що робити?</summary><p>Відкрий Student Hub один раз з інтернетом, щоб він встановився як PWA — після цього він працюватиме офлайн.</p></details>
+          </div>
+        </article>
+        <article class="panel">
+          <div class="panel-title"><div><p class="micro">CONTACT</p><h2>Зв'язатися з нами</h2></div></div>
+          <p>Якщо виникли проблеми, є ідеї чи потрібна допомога — пиши авторам напряму в Telegram.</p>
+          <div class="contact-links">
+            <a class="outline-button" href="https://t.me/Koptsyh" target="_blank" rel="noopener"><span aria-hidden="true">✈</span> Володимир</a>
+            <a class="outline-button" href="https://t.me/marjan4_uk" target="_blank" rel="noopener"><span aria-hidden="true">✈</span> Мар'ян</a>
+          </div>
+        </article>
+        <article class="panel donate-panel">
+          <div class="panel-title"><div><p class="micro">THANK YOU</p><h2>Підтримати авторів</h2></div></div>
+          <p>Якщо Student Hub допомагає в навчанні — можеш підтримати розробників невеликим донатом. Дякуємо за підтримку! <span aria-hidden="true">💚</span></p>
+          <a class="donate-button" href="https://send.monobank.ua/jar/tAJUgcb31" target="_blank" rel="noopener"><span aria-hidden="true">💛</span> Підтримати проєкт</a>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <div id="print-schedule-root" class="print-only" aria-hidden="true"></div>
+  <div class="modal-wrap" id="modal-wrap" aria-hidden="true"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="close" id="modal-close" aria-label="Закрити">×</button><p class="micro" id="modal-kicker">NEW ENTRY</p><h2 id="modal-title">Новий запис</h2><form id="entry-form"></form></section></div>
+  <template id="empty-state"><div class="empty"><span aria-hidden="true">◌</span><b>Тут поки порожньо</b><p>Додай перший запис кнопкою вище.</p></div></template>
+  <script src="app.js" defer></script>
+</body>
+</html>

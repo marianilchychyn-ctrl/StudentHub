@@ -1,0 +1,255 @@
+/* =====================================================================
+   POLISH LAYER — доступність, анімації, адаптивність, консистентні іконки
+   Підключається останнім, тож акуратно доповнює style.css + design-upgrade.css
+   ===================================================================== */
+
+:root {
+  /* трохи світліший приглушений колір — краща контрастність дрібного тексту */
+  --muted: #9aa7bd;
+  --focus-ring: 0 0 0 3px rgba(6, 10, 18, 1), 0 0 0 6px rgba(70, 182, 255, .55);
+}
+
+/* ---------------------------------------------------------------------
+   Базова гігієна: плавний скрол, кращий рендер тексту
+--------------------------------------------------------------------- */
+html { scroll-behavior: smooth; }
+body { text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+
+/* ---------------------------------------------------------------------
+   Skip-link — перехід до контенту з клавіатури
+--------------------------------------------------------------------- */
+.skip-link {
+  position: fixed; top: -60px; left: 12px; z-index: 100;
+  background: var(--green); color: #06150f; font: 800 13px Manrope, sans-serif;
+  padding: 12px 18px; border-radius: 8px; text-decoration: none;
+  box-shadow: 0 10px 30px #0007; transition: top .2s ease;
+}
+.skip-link:focus { top: 12px; }
+main:focus { outline: none; }
+
+/* ---------------------------------------------------------------------
+   Єдина, консистентна система фокус-стану для клавіатурної навігації
+--------------------------------------------------------------------- */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+button:focus-visible,
+a:focus-visible,
+.nav-btn:focus-visible,
+.day-tab:focus-visible,
+.filter:focus-visible,
+.week-choice:focus-visible,
+.primary-button:focus-visible,
+.outline-button:focus-visible,
+.data-btn:focus-visible,
+.delete:focus-visible,
+.open-file:focus-visible,
+.link-button:focus-visible,
+.close:focus-visible,
+.donate-button:focus-visible,
+.check:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible,
+.search:focus-within,
+#share-link-output:focus-visible,
+#import-link-value:focus-visible,
+.duration-custom input:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+.faq-item summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; border-radius: 6px; }
+
+/* ---------------------------------------------------------------------
+   Іконки навігації — акуратні «чіпи» замість голих гліфів
+--------------------------------------------------------------------- */
+.nav-btn i {
+  display: inline-grid; place-items: center;
+  width: 30px; height: 30px; flex: none;
+  border-radius: 9px; font-size: 16px;
+  background: rgba(70, 182, 255, .07);
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1), background .25s ease, color .2s ease, box-shadow .25s ease;
+}
+.nav-btn:hover i { transform: scale(1.08) rotate(-2deg); background: rgba(70, 182, 255, .16); }
+.nav-btn.active i { background: rgba(70, 182, 255, .18); box-shadow: 0 0 14px rgba(70, 182, 255, .28); }
+.nav-btn { border-radius: 10px; }
+.nav-btn em { transition: transform .2s ease, background .2s ease; }
+.nav-btn:hover em { transform: scale(1.08); }
+
+/* Метрики / іконки файлів — легке підняття та тінь при наведенні панелі */
+.metric-icon, .file-icon {
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease;
+}
+.metrics article:hover .metric-icon { transform: scale(1.08) rotate(-3deg); }
+.file-card:hover .file-icon { transform: scale(1.06); box-shadow: 0 0 22px rgba(70,182,255,.22); }
+
+/* ---------------------------------------------------------------------
+   Кнопки: приємний «натиск» + узгоджені розміри, аби все виглядало охайно
+--------------------------------------------------------------------- */
+.primary-button, .outline-button, .data-btn, .donate-button,
+.day-tab, .filter, .week-choice, .link-button, .open-file {
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease, background .2s ease, border-color .2s ease, color .2s ease, filter .2s ease;
+}
+.primary-button:active, .outline-button:active, .data-btn:active,
+.donate-button:active, .day-tab:active, .filter:active, .week-choice:active,
+.open-file:active {
+  transform: scale(.96);
+}
+.primary-button, .outline-button, .donate-button { display: inline-flex; align-items: center; gap: 8px; }
+.primary-button span[aria-hidden], .outline-button span[aria-hidden], .donate-button span[aria-hidden] { font-size: 15px; line-height: 1; }
+
+/* Кнопки видалення (×) — достатній розмір дотику + акуратний hover */
+.delete {
+  min-width: 34px; min-height: 34px;
+  display: inline-grid; place-items: center;
+  border-radius: 8px; font-size: 18px;
+  transition: background .2s ease, color .2s ease, transform .15s ease;
+}
+.delete:hover { background: rgba(255, 111, 111, .14); color: #ff8a8a; }
+.delete:active { transform: scale(.9); }
+
+/* Чекбокс завдання — приємний «поп»-ефект при відмітці */
+.check { transition: background .2s ease, border-color .2s ease, transform .15s ease; }
+.check:active { transform: scale(.9); }
+.check:checked { animation: checkPop .28s ease; }
+@keyframes checkPop { 0% { transform: scale(.75); } 55% { transform: scale(1.18); } 100% { transform: scale(1); } }
+
+/* ---------------------------------------------------------------------
+   Перемикання сторінок — плавна поява замість миттєвого стрибка
+--------------------------------------------------------------------- */
+.page.active { animation: pageIn .38s cubic-bezier(.16,.84,.44,1); }
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Каскадна поява карток і рядків списків при кожному рендері */
+.lesson-row, .deadline, .task-card, .file-card, .schedule-card {
+  animation: itemIn .4s cubic-bezier(.16,.84,.44,1) both;
+}
+@keyframes itemIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.lesson-row:nth-child(1), .deadline:nth-child(1), .task-card:nth-child(1), .file-card:nth-child(1), .schedule-card:nth-child(1) { animation-delay: .02s; }
+.lesson-row:nth-child(2), .deadline:nth-child(2), .task-card:nth-child(2), .file-card:nth-child(2), .schedule-card:nth-child(2) { animation-delay: .06s; }
+.lesson-row:nth-child(3), .deadline:nth-child(3), .task-card:nth-child(3), .file-card:nth-child(3), .schedule-card:nth-child(3) { animation-delay: .10s; }
+.lesson-row:nth-child(4), .deadline:nth-child(4), .task-card:nth-child(4), .file-card:nth-child(4), .schedule-card:nth-child(4) { animation-delay: .14s; }
+.lesson-row:nth-child(5), .task-card:nth-child(5), .file-card:nth-child(5), .schedule-card:nth-child(5) { animation-delay: .18s; }
+.lesson-row:nth-child(6), .task-card:nth-child(6), .file-card:nth-child(6), .schedule-card:nth-child(6) { animation-delay: .22s; }
+.lesson-row:nth-child(n+7), .task-card:nth-child(n+7), .file-card:nth-child(n+7), .schedule-card:nth-child(n+7) { animation-delay: .26s; }
+
+.empty { animation: itemIn .35s ease both; }
+
+/* ---------------------------------------------------------------------
+   Мобільне меню: підложка + плавна поява (замість різкого display:flex)
+--------------------------------------------------------------------- */
+.sidebar-backdrop {
+  position: fixed; inset: 0; z-index: 4;
+  background: rgba(2, 5, 10, .58);
+  backdrop-filter: blur(2px);
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s ease;
+}
+.sidebar-backdrop:not([hidden]) { opacity: 1; pointer-events: auto; }
+@media (min-width: 611px) { .sidebar-backdrop { display: none !important; } }
+body.no-scroll { overflow: hidden; }
+
+@media (max-width: 610px) {
+  .sidebar.open { animation: sidebarIn .3s cubic-bezier(.16,.84,.44,1); }
+}
+@keyframes sidebarIn {
+  from { transform: translateX(-18px); opacity: .3; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+.hamburger { transition: transform .2s ease, color .2s ease; border-radius: 8px; }
+.hamburger:active { transform: scale(.92); }
+
+/* ---------------------------------------------------------------------
+   Модалка — трохи енергійніша поява (доповнює вже наявний modalIn)
+--------------------------------------------------------------------- */
+.close { transition: background .2s ease, color .2s ease, transform .15s ease; border-radius: 8px; width: 32px; height: 32px; display: grid; place-items: center; }
+.close:hover { background: rgba(255,255,255,.08); color: #fff; }
+.close:active { transform: scale(.9); }
+
+/* ---------------------------------------------------------------------
+   Дрібні виправлення контрасту/легкості читання
+--------------------------------------------------------------------- */
+.micro { font-size: 11px; }
+.type { font-size: 10px; padding: 4px 8px; }
+.deadline small { font-size: 11px; }
+.hint { font-size: 12px; line-height: 1.65; }
+.storage-note { font-size: 12.5px; }
+
+/* ---------------------------------------------------------------------
+   Адаптивність: додаткові контрольні точки для планшетів і малих екранів
+--------------------------------------------------------------------- */
+
+/* Великі планшети / вузькі ноутбуки: акуратніше поле й пропорції блоків */
+@media (max-width: 1180px) and (min-width: 901px) {
+  main { padding: 30px clamp(20px, 3.5vw, 48px) 54px; }
+  .home-grid { grid-template-columns: 1fr; }
+  .hero { padding: 30px 32px; }
+}
+
+/* Планшети в портретній орієнтації: 2 колонки замість тісних 3 */
+@media (max-width: 900px) and (min-width: 611px) {
+  .task-grid, .file-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Дні тижня в розкладі: трохи менші квадратні кнопки на вузьких екранах,
+   аби 7 днів акуратно вміщались в один ряд */
+@media (max-width: 610px) {
+  .day-tab { width: 42px; height: 42px; border-radius: 10px; font-size: 11px; }
+}
+
+/* Дуже вузькі телефони (<= 400px): метрики й форма в один стовпець, менші шрифти */
+@media (max-width: 400px) {
+  .day-tab { width: 37px; height: 37px; border-radius: 9px; font-size: 10.5px; }
+  .metrics { grid-template-columns: 1fr 1fr; }
+  .metrics article:nth-child(3) { grid-column: 1 / -1; }
+  .hero h2 { font-size: 21px; }
+  .hero-copy { font-size: 13px; }
+  h1 { font-size: 17px; }
+  .modal { padding: 20px; }
+  .schedule-card { grid-template-columns: 62px 1fr auto; padding: 12px; gap: 8px; }
+  .duration-presets { gap: 6px; }
+  .duration-choice { padding: 7px 8px; font-size: 10.5px; }
+}
+
+/* Дуже широкі екрани: не розтягуємо контент занадто сильно */
+@media (min-width: 1700px) {
+  main { max-width: 1680px; }
+}
+
+/* Ландшафтна орієнтація на телефоні — заощаджуємо вертикальний простір */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+  .hero { min-height: 0; padding: 20px 24px; }
+  .terminal-art { display: none; }
+}
+
+/* ---------------------------------------------------------------------
+   Друк: приховуємо скролбар-обгортки таблиці графіка
+--------------------------------------------------------------------- */
+@media print {
+  .academic-scroll { overflow: visible; }
+}
+
+/* ---------------------------------------------------------------------
+   Пошана до prefers-reduced-motion (додатково до правила в design-upgrade.css) —
+   вимикаємо саме появу елементів, а не тільки скорочуємо тривалість
+--------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .page.active,
+  .lesson-row, .deadline, .task-card, .file-card, .schedule-card,
+  .empty, .sidebar.open, .check:checked {
+    animation: none !important;
+  }
+  .skip-link { transition: none; }
+}
