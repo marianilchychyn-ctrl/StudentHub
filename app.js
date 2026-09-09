@@ -4,13 +4,20 @@
   const $$ = selector => [...document.querySelectorAll(selector)];
   const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
   const fullDays = ['Неділя', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П’ятниця', 'Субота'];
-  const seed = { lessons: [], tasks: [], files: [] };
+  const ACADEMIC_VALUE_COLUMNS = 9;
+  const emptyAcademicRow = () => ({ course: '', groups: '', values: Array(ACADEMIC_VALUE_COLUMNS).fill('') });
+  const seed = { lessons: [], tasks: [], files: [], academic: { autumn: [emptyAcademicRow()], spring: [emptyAcademicRow()] } };
   const clone = value => JSON.parse(JSON.stringify(value));
 
   function load() {
     try {
       const saved = JSON.parse(localStorage.getItem('student-hub-v5'));
       if (!saved || !Array.isArray(saved.lessons) || !Array.isArray(saved.tasks) || !Array.isArray(saved.files)) return clone(seed);
+      // Сумісність зі збереженнями до появи власного (редагованого користувачем) графіка навчального процесу.
+      if (!saved.academic || typeof saved.academic !== 'object') saved.academic = clone(seed.academic);
+      ['autumn', 'spring'].forEach(semester => {
+        if (!Array.isArray(saved.academic[semester])) saved.academic[semester] = clone(seed.academic[semester]);
+      });
       return saved;
     } catch { return clone(seed); }
   }
@@ -31,9 +38,12 @@
   const isOverdue = item => !item.done && item.due && item.due < todayISO();
   function showEmpty(node) { node.append($('#empty-state').content.cloneNode(true)); }
 
+  // --- Тривалість пари (за замовчуванням 1 год 30 хв) — використовується таймером, прогрес-баром і .ics-експортом ---
   const DEFAULT_LESSON_DURATION = 90;
   let lessonDuration = Number(localStorage.getItem('student-hub-duration')) || DEFAULT_LESSON_DURATION;
 
+  // Розбирає рядок часу пари: повертає {start:{h,m}, end:{h,m}}. Якщо вказано лише початок — кінець
+  // обчислюється додаванням поточної налаштованої тривалості пари.
   function parseLessonRange(text) {
     const matches = [...String(text || '').matchAll(/(\d{1,2}):(\d{2})/g)];
     if (!matches.length) return null;
@@ -475,6 +485,11 @@
     try {
       const parsed = JSON.parse(await file.text());
       if (!Array.isArray(parsed.lessons) || !Array.isArray(parsed.tasks) || !Array.isArray(parsed.files)) throw new Error('bad shape');
+      // Сумісність зі старими резервними копіями без графіка навчального процесу.
+      if (!parsed.academic || typeof parsed.academic !== 'object') parsed.academic = clone(seed.academic);
+      ['autumn', 'spring'].forEach(semester => {
+        if (!Array.isArray(parsed.academic[semester])) parsed.academic[semester] = clone(seed.academic[semester]);
+      });
       if (!confirm('Імпорт замінить поточні дані на дані з файлу. Продовжити?')) return;
       data = parsed; save(); renderAll();
     } catch { alert('Не вдалося прочитати файл — переконайся, що це резервна копія Student Hub.'); }
@@ -688,35 +703,10 @@
     } catch { /* пошкоджене або чуже посилання — тихо ігноруємо */ }
   }
 
-  // --- Графік навчального процесу (2026/2027 н.р., ННІ КНІТ) ---
+  // --- Графік навчального процесу: власний, редагований графік у вже готовому макеті таблиці ---
   const academicColumns = ['Курс', 'Групи', 'Теоретичне навчання', '1-й модульний тиждень', 'Теоретичне навчання', '2-й модульний тиждень', 'Семестровий контроль', 'Канікули', 'Практика', 'Дипломне проектування', 'Атестація (ДЕ, ККЗ, ДР/П, МР)'];
-  const academicSemesters = {
-    autumn: {
-      label: 'Осінній семестр', rows: [
-        { course: '1', groups: 'КН, ІСТ, ІПЗ, КІ, КБ', values: ['01.09.26–25.10.26', '12.10.26–25.10.26', '26.10.26–20.12.26', '07.12.26–20.12.26', '21.12.26–31.12.26', '–', '–', '–', '–'] },
-        { course: '1', groups: 'КНС, ІСТС, ІПЗС, КІС', values: ['01.09.26–25.10.26', '12.10.26–25.10.26', '26.10.26–20.12.26', '07.12.26–20.12.26', '21.12.26–31.12.26', '–', '–', '–', '–'] },
-        { course: '2', groups: 'КН, ІСТ, ІПЗ, КІ', values: ['01.09.26–25.10.26', '12.10.26–25.10.26', '26.10.26–20.12.26', '07.12.26–20.12.26', '21.12.26–31.12.26', '01.07.26–31.08.26', '–', '–', '–'] },
-        { course: '2', groups: 'КНС, ІСТС, ІПЗС, КІС', values: ['01.09.26–25.10.26', '12.10.26–25.10.26', '26.10.26–20.12.26', '07.12.26–20.12.26', '21.12.26–31.12.26', '01.07.26–31.08.26', '–', '–', '–'] },
-        { course: '3', groups: 'КН, ІСТ, ІПЗ, КІ', values: ['01.09.26–25.10.26', '12.10.26–25.10.26', '26.10.26–20.12.26', '07.12.26–20.12.26', '21.12.26–31.12.26', '01.07.26–31.08.26', '–', '–', '–'] },
-        { course: '3', groups: 'КНС, ІСТС, ІПЗС', values: ['01.09.26–25.10.26', '12.10.26–25.10.26', '26.10.26–20.12.26', '07.12.26–20.12.26', '21.12.26–31.12.26', '01.07.26–31.08.26', '–', '–', '–'] },
-        { course: '4', groups: 'КН, ІСТ, ІПЗ', values: ['01.09.26–25.10.26', '12.10.26–25.10.26', '26.10.26–20.12.26', '07.12.26–20.12.26', '21.12.26–31.12.26', '01.07.26–31.08.26', '–', '–', '–'] },
-        { course: '5', groups: 'КН(м)', values: ['01.09.26–25.10.26', '12.10.26–25.10.26', '26.10.26–20.12.26', '07.12.26–20.12.26', '21.12.26–31.12.26', '–', '–', '–', '–'] },
-        { course: '6', groups: 'КН (м)', values: ['–', '–', '–', '–', '–', '01.07.26–31.08.26', '01.09.26–18.10.26', '19.10.26–13.12.26', '14.12.26–31.12.26'] },
-      ]
-    },
-    spring: {
-      label: 'Весняний семестр', rows: [
-        { course: '1', groups: 'КН, ІСТ, ІПЗ, КІ, КБ', values: ['25.01.27–21.03.27', '09.03.27–21.03.27', '22.03.27–16.05.27', '03.05.25–16.05.27', '17.05.27–06.06.27', '01.01.27–24.01.27, 07.06.27–30.06.27', '–', '–', '–'] },
-        { course: '1', groups: 'КНС, ІСТС, ІПЗС, КІС', values: ['25.01.27–21.03.27', '09.03.27–21.03.27', '22.03.27–16.05.27', '03.05.25–16.05.27', '17.05.27–06.06.27', '01.01.27–24.01.27, 07.06.27–30.06.27', '–', '–', '–'] },
-        { course: '2', groups: 'КН, ІСТ, ІПЗ, КІ', values: ['25.01.27–21.03.27', '09.03.27–21.03.27', '22.03.27–16.05.27', '03.05.25–16.05.27', '17.05.27–06.06.27', '01.01.27–24.01.27, 07.06.27–30.06.27', '–', '–', '–'] },
-        { course: '2', groups: 'КНС, ІСТС, ІПЗС, КІС', values: ['25.01.27–21.03.27', '09.03.27–21.03.27', '22.03.27–16.05.27', '03.05.25–16.05.27', '07.06.27–20.06.27', '01.01.27–24.01.27, 21.06.27–30.06.27', '17.05.27–06.06.27 (3 тижні)', '–', '–'] },
-        { course: '3', groups: 'КН, ІСТ, ІПЗ, КІ', values: ['25.01.27–21.03.27', '09.03.27–21.03.27', '22.03.27–16.05.27', '03.05.25–16.05.27', '07.06.27–20.06.27', '01.01.27–24.01.27, 21.06.27–30.06.27', '17.05.27–06.06.27 (3 тижні)', '–', '–'] },
-        { course: '3', groups: 'КНС, ІСТС, ІПЗС', values: ['25.01.27–07.03.27', '01.03.27–07.03.27', '08.03.27–18.04.27', '12.04.27–18.04.27', '24.05.27–06.06.27', '01.01.27–24.01.27', '19.04.27–16.05.27, 17.05.27–23.05.27, 07.06.27–13.06.27 (4 тижні)', '–', '14.06.27–30.06.27'] },
-        { course: '4', groups: 'КН, ІСТ, ІПЗ', values: ['25.01.27–07.03.27', '01.03.27–07.03.27', '08.03.27–18.04.27', '12.04.27–18.04.27', '24.05.27–06.06.27', '01.01.27–24.01.27', '19.04.27–16.05.27, 17.05.27–23.05.27, 07.06.27–13.06.27 (4 тижні)', '–', '14.06.27–30.06.27'] },
-        { course: '5', groups: 'КН(м)', values: ['25.01.27–21.03.27', '09.03.27–21.03.27', '22.03.27–16.05.27', '03.05.25–16.05.27', '17.05.27–06.06.27', '01.01.27–24.01.27, 21.06.27–30.06.27', '–', '11.01.27–24.01.27, 07.06.27–20.06.27', '–'] },
-      ]
-    }
-  };
+  const academicSemesterLabels = { autumn: 'Осінній семестр', spring: 'Весняний семестр' };
+
   function renderAcademic() {
     const root = $('#academic-content');
     if (!root) return;
@@ -725,18 +715,54 @@
       button.classList.toggle('active', on);
       button.setAttribute('aria-pressed', String(on));
     });
-    const semester = academicSemesters[selectedSemester];
-    if (!semester) return;
-    // Курс виводиться одним об'єднаним рядком (rowspan), якщо кілька груп курсу мають однаковий графік підряд.
-    let bodyRows = '';
-    for (let i = 0; i < semester.rows.length; i++) {
-      const row = semester.rows[i];
-      const isFirstOfCourse = i === 0 || semester.rows[i - 1].course !== row.course;
-      let span = 1;
-      if (isFirstOfCourse) { while (semester.rows[i + span] && semester.rows[i + span].course === row.course) span++; }
-      bodyRows += `<tr>${isFirstOfCourse ? `<td class="course-cell" rowspan="${span}">${safe(row.course)}</td>` : ''}<td class="groups-cell">${safe(row.groups)}</td>${row.values.map(value => `<td>${safe(value)}</td>`).join('')}</tr>`;
-    }
-    root.innerHTML = `<article class="panel academic-table-wrap"><div class="panel-title"><div><p class="micro">${selectedSemester === 'autumn' ? 'СЕМЕСТР I' : 'СЕМЕСТР II'}</p><h3>${safe(semester.label)}</h3></div></div><div class="academic-scroll"><table class="academic-table"><thead><tr>${academicColumns.map(column => `<th>${safe(column)}</th>`).join('')}</tr></thead><tbody>${bodyRows}</tbody></table></div></article>`;
+    const rows = data.academic[selectedSemester] || [];
+    const bodyRows = rows.map((row, rowIndex) => `<tr>
+      <td class="course-cell"><input class="academic-input academic-course-input" data-row="${rowIndex}" data-field="course" value="${safe(row.course)}" placeholder="—" aria-label="Курс"></td>
+      <td class="groups-cell"><input class="academic-input" data-row="${rowIndex}" data-field="groups" value="${safe(row.groups)}" placeholder="Групи" aria-label="Групи"></td>
+      ${row.values.map((value, valueIndex) => `<td><input class="academic-input" data-row="${rowIndex}" data-value-index="${valueIndex}" value="${safe(value)}" placeholder="—" aria-label="${safe(academicColumns[valueIndex + 2])}"></td>`).join('')}
+      <td class="academic-row-actions"><button type="button" class="delete academic-row-delete" data-row="${rowIndex}" title="Видалити рядок" aria-label="Видалити рядок">×</button></td>
+    </tr>`).join('');
+    root.innerHTML = `<article class="panel academic-table-wrap">
+      <div class="panel-title">
+        <div><p class="micro">${selectedSemester === 'autumn' ? 'СЕМЕСТР I' : 'СЕМЕСТР II'}</p><h3>${safe(academicSemesterLabels[selectedSemester])}</h3></div>
+        <div class="academic-actions">
+          <button type="button" class="link-button academic-add-row">+ Додати рядок</button>
+          <button type="button" class="link-button academic-clear-semester">Очистити семестр</button>
+        </div>
+      </div>
+      <div class="academic-scroll"><table class="academic-table"><thead><tr>${academicColumns.map(column => `<th>${safe(column)}</th>`).join('')}<th class="academic-th-actions"></th></tr></thead><tbody>${bodyRows}</tbody></table></div>
+      ${!rows.length ? '<p class="hint academic-empty-hint">Рядків ще немає — натисни «+ Додати рядок», щоб почати вписувати свій графік.</p>' : ''}
+    </article>`;
+
+    root.querySelectorAll('.academic-input').forEach(input => {
+      input.addEventListener('change', () => {
+        const row = data.academic[selectedSemester][Number(input.dataset.row)];
+        if (!row) return;
+        if (input.dataset.field === 'course') row.course = input.value;
+        else if (input.dataset.field === 'groups') row.groups = input.value;
+        else row.values[Number(input.dataset.valueIndex)] = input.value;
+        save();
+      });
+    });
+    root.querySelector('.academic-add-row').addEventListener('click', () => {
+      data.academic[selectedSemester].push(emptyAcademicRow());
+      save();
+      renderAcademic();
+    });
+    root.querySelectorAll('.academic-row-delete').forEach(button => {
+      button.addEventListener('click', () => {
+        data.academic[selectedSemester].splice(Number(button.dataset.row), 1);
+        save();
+        renderAcademic();
+      });
+    });
+    root.querySelector('.academic-clear-semester').addEventListener('click', () => {
+      if (!rows.length) return;
+      if (!confirm(`Очистити всі рядки за «${academicSemesterLabels[selectedSemester]}»?`)) return;
+      data.academic[selectedSemester] = [];
+      save();
+      renderAcademic();
+    });
   }
 
   if ('serviceWorker' in navigator) {
