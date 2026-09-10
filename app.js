@@ -504,13 +504,35 @@
   });
 
   // --- Автопідбір розкладу з Excel за групою -----------------------------------------------
-  // Розрахований на офіційний шаблон розкладу (як у КНІТ): один аркуш на факультет, рядок 1 —
-  // назви груп починаючи з колонки C, колонка A — день тижня (об'єднані комірки, вертикальний
-  // текст), колонка B — час пари у форматі "08:30_ч" / "08:30_з" (ч = чисельник, з = знаменник).
-  // Після заголовка йде рівно 5 днів × 5 пар × 2 тижні = 50 рядків. Лекція на кілька груп одразу
-  // зберігається як об'єднана комірка на кілька колонок і/або обидва тижневих рядки — це і є
-  // ознака "пара щотижня" замість "лише в чисельнику/знаменнику".
+  // Підтримує ТРИ рівні розпізнавання — формат детектується автоматично для кожного аркуша
+  // окремо (книга може містити аркуші різних форматів одночасно), від найточнішого до
+  // найзагальнішого:
+  //
+  // Формат A (як у КНІТ): рядок 1 — назви груп починаючи з колонки C, колонка A — день тижня
+  // (об'єднані комірки), кожна пара — багаторядковий текст у комірці (предмет / викладач /
+  // аудиторія на окремих рядках). Рівно 5 днів × 5 пар × 2 тижні = 50 рядків після заголовка.
+  //
+  // Формат B (як у НЛТУ/ІМАКІТ): рядок-заголовок з групами шукається динамічно (перший рядок, де
+  // колонка A містить "Дні тижня"), назви груп — з колонки E (зсув шукаємо динамічно). Колонка B —
+  // номер пари, колонка C — час, колонка D — позначка тижня "н"/"п". Кожна пара — ОДИН рядок
+  // тексту виду "[л. ]Предмет аудиторія (Викладач)". Блок дня — 11 рядків (10 даних + розділювач).
+  //
+  // Формат C (універсальний, для будь-яких інших шаблонів того самого типу "сітка днів × пар"):
+  // жодних жорстких позицій колонок — усе визначається евристично:
+  //   1. шукаємо колонку, де в багатьох рядках зустрічаються назви днів тижня (Понеділок...) —
+  //      це колонка днів, а самі рядки з назвами днів — межі блоків кожного дня (розмір блоку
+  //      більше не хардкодиться, а обчислюється як відстань між сусідніми днями);
+  //   2. над першим днем шукаємо рядок із кількома текстовими підписами — це заголовок з групами;
+  //   3. у колонках одразу після дня зчитуємо статистику значень і вгадуємо, яка колонка — номер
+  //      пари (числа 1–8), яка — час ("08.30" тощо), яка — позначка тижня (короткі "н"/"п"/"ч"/"з");
+  //      усе, що лишилось у заголовку — це колонки груп;
+  //   4. вміст комірки пари розбирається і як багаторядковий (формат A), і як однорядковий
+  //      (формат B) — залежно від того, чи є в тексті перенос рядка.
+  // Це не гарантує 100% розпізнавання геть будь-якого файлу (наприклад, сканів чи зовсім іншої
+  // структури), але покриває значно ширше коло реальних шаблонів розкладу.
   const EXCEL_TIME_SLOTS = ['08:30', '10:20', '12:10', '14:30', '16:20'];
+  const EXCEL_SKIP_VALUES_B = ['день самостійної підготовки', '---', '—', '-'];
+  const EXCEL_DAY_NAMES = ["понеділок", "вівторок", "середа", "четвер", "п'ятниця", "субота", "неділя"];
 
   function excelNormalizeKind(raw) {
     const s = (raw || '').toLowerCase();
@@ -532,16 +554,209 @@
     for (const m of merges) { if (r >= m.s.r && r <= m.e.r && c >= m.s.c && c <= m.e.c) return { r: m.s.r, c: m.s.c }; }
     return { r, c };
   }
+  function excelNormDay(s) { return String(s || '').toLowerCase().replace(/[’‘`´]/g, "'").trim(); }
+  function excelDayIndex(s) {
+    const n = excelNormDay(s);
+    return EXCEL_DAY_NAMES.findIndex(d => n === d || (n.length >= 4 && n.startsWith(d.slice(0, 4))));
+  }
+
+  // Визначає формат і рядок-заголовок для конкретного аркуша (або null, якщо аркуш не схожий
+  // на жоден з відомих шаблонів розкладу — наприклад, легенда/титулка).
+  function excelDetectSheetLayout(rows) {
+    const header0 = rows[0] || [];
+    const groupsA = [];
+    header0.forEach((val, col) => { if (col >= 2 && typeof val === 'string' && val.trim()) groupsA.push(col); });
+    if (groupsA.length) return { format: 'A', headerRow: 0, groupCols: groupsA };
+
+    let headerRowB = -1;
+    for (let r = 0; r < Math.min(rows.length, 60); r++) {
+      const v = rows[r] && rows[r][0];
+      if (typeof v === 'string' && v.trim().toLowerCase().includes('тижня')) { headerRowB = r; break; }
+    }
+    if (headerRowB !== -1) {
+      const headerRowVals = rows[headerRowB] || [];
+      const groupsB = [];
+      headerRowVals.forEach((val, col) => {
+        if (col >= 4 && typeof val === 'string' && val.trim() && !val.trim().toLowerCase().includes('тижня')) groupsB.push(col);
+      });
+      if (groupsB.length) return { format: 'B', headerRow: headerRowB, groupCols: groupsB };
+    }
+
+    return excelDetectGenericLayout(rows);
+  }
+
+  // --- Формат C: універсальне евристичне розпізнавання ---------------------------------------
+  function excelFindDayAnchors(rows) {
+    for (let col = 0; col <= 6; col++) {
+      const hits = [];
+      for (let r = 0; r < rows.length; r++) {
+        const v = rows[r] && rows[r][col];
+        if (typeof v !== 'string') continue;
+        const idx = excelDayIndex(v);
+        if (idx !== -1) hits.push({ row: r, idx });
+      }
+      if (new Set(hits.map(h => h.idx)).size >= 2) return { col, hits };
+    }
+    return null;
+  }
+  function excelFindHeaderRowGeneric(rows, dayCol, firstDayRow) {
+    for (let r = firstDayRow - 1; r >= Math.max(0, firstDayRow - 20); r--) {
+      const row = rows[r] || [];
+      let count = 0;
+      for (let c = dayCol + 1; c < row.length; c++) { if (typeof row[c] === 'string' && row[c].trim()) count++; }
+      if (count >= 2) return r;
+    }
+    return Math.max(0, firstDayRow - 1);
+  }
+  function excelFindStructuralCols(rows, dayCol, firstRow, lastRow) {
+    const limit = Math.min(lastRow, rows.length - 1);
+    const stats = {};
+    for (let r = firstRow; r <= limit; r++) {
+      const row = rows[r] || [];
+      for (let c = dayCol + 1; c <= dayCol + 6 && c < row.length; c++) {
+        const v = row[c];
+        if (v === null || v === undefined || v === '') continue;
+        stats[c] = stats[c] || { num: 0, time: 0, marker: 0, total: 0 };
+        stats[c].total++;
+        if (typeof v === 'number' && v >= 1 && v <= 8) stats[c].num++;
+        else if (typeof v === 'string') {
+          const s = v.trim();
+          if (/^\d{1,2}[.:]\d{2}/.test(s)) stats[c].time++;
+          else if (s.length <= 2 && /^[нпчз]/i.test(s)) stats[c].marker++;
+          else if (/^\d+([.,]\d+)?$/.test(s) && Number(s) >= 1 && Number(s) <= 8) stats[c].num++;
+        }
+      }
+    }
+    let periodCol = null, timeCol = null, markerCol = null, bestNum = 0, bestTime = 0, bestMarker = 0;
+    Object.keys(stats).forEach(cStr => {
+      const c = Number(cStr), s = stats[c];
+      if (s.num > bestNum && s.num >= s.total * 0.4) { bestNum = s.num; periodCol = c; }
+      if (s.time > bestTime && s.time >= s.total * 0.4) { bestTime = s.time; timeCol = c; }
+      if (s.marker > bestMarker && s.marker >= s.total * 0.4) { bestMarker = s.marker; markerCol = c; }
+    });
+    return { periodCol, timeCol, markerCol };
+  }
+  function excelFindGroupColsGeneric(headerRowVals, dayCol, struct) {
+    const cols = [];
+    headerRowVals.forEach((val, col) => {
+      if (col <= dayCol || col === struct.periodCol || col === struct.timeCol || col === struct.markerCol) return;
+      if (typeof val !== 'string') return;
+      const t = val.trim();
+      if (!t || excelDayIndex(t) !== -1) return;
+      const low = t.toLowerCase();
+      if (low.includes('тижня') || low.includes('час проведен')) return;
+      cols.push(col);
+    });
+    return cols;
+  }
+  function excelDetectGenericLayout(rows) {
+    const anchor = excelFindDayAnchors(rows);
+    if (!anchor || anchor.hits.length < 2) return null;
+    const dayRows = anchor.hits;
+    const headerRow = excelFindHeaderRowGeneric(rows, anchor.col, dayRows[0].row);
+    const struct = excelFindStructuralCols(rows, anchor.col, dayRows[0].row, dayRows[dayRows.length - 1].row + 20);
+    const groupCols = excelFindGroupColsGeneric(rows[headerRow] || [], anchor.col, struct);
+    if (!groupCols.length) return null;
+    return { format: 'C', headerRow, dayCol: anchor.col, dayRows, struct, groupCols };
+  }
+  // Розбирає вміст комірки пари як багаторядковий (формат A) АБО однорядковий (формат B) —
+  // залежно від того, що фактично в комірці.
+  function excelParseLessonCellUniversal(raw) {
+    if (raw === null || raw === undefined) return null;
+    let s = String(raw);
+    if (!s.trim() || s.trim() === '---') return null;
+    if (EXCEL_SKIP_VALUES_B.includes(s.trim().toLowerCase())) return null;
+    let subject = '', room = '', teacher = '', kind = null;
+    if (s.includes('\n')) {
+      const lines = s.split('\n').map(x => x.trim()).filter(Boolean);
+      if (lines.length >= 3) {
+        room = lines[lines.length - 1];
+        teacher = lines[lines.length - 2];
+        const parsed = excelParseSubjectKind(lines[lines.length - 3]);
+        subject = parsed.subject; kind = parsed.kind;
+      } else if (lines.length === 2) {
+        room = lines[1];
+        const parsed = excelParseSubjectKind(lines[0]);
+        subject = parsed.subject; kind = parsed.kind;
+      } else if (lines.length === 1) {
+        s = lines[0];
+      } else return null;
+    }
+    if (!subject) {
+      s = s.replace(/\s+/g, ' ').trim();
+      const tm = s.match(/\(([^()]+)\)\s*$/);
+      if (tm) { teacher = tm[1].trim(); s = s.slice(0, tm.index).trim(); }
+      const lm = s.match(/^л\.?\s+/i);
+      if (lm) { kind = 'Лекція'; s = s.slice(lm[0].length).trim(); }
+      const split = excelSplitSubjectRoomB(s);
+      subject = split.subject; room = room || split.room;
+    }
+    subject = subject.replace(/\s{2,}/g, ' ').trim();
+    if (!subject) return null;
+    if (!kind) kind = 'Практика';
+    return { subject, kind, place: teacher ? (room ? `${room} · ${teacher}` : teacher) : room };
+  }
+  function excelExtractLessonsC(workbook, sheetName, groupCol, layout) {
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: true });
+    const merges = sheet['!merges'] || [];
+    const lessons = [];
+    const { dayRows, struct } = layout;
+    const markerWeek = raw => {
+      const s = String(raw || '').trim().toLowerCase();
+      if (!s) return null;
+      if (s[0] === 'н' || s[0] === 'ч') return 'numerator';
+      if (s[0] === 'п' || s[0] === 'з') return 'denominator';
+      return null;
+    };
+    for (let d = 0; d < dayRows.length; d++) {
+      const blockStart = dayRows[d].row;
+      const blockEnd = (d + 1 < dayRows.length ? dayRows[d + 1].row : blockStart + 24) - 1;
+      let periodCounter = 0, r = blockStart;
+      while (r <= blockEnd && r < rows.length) {
+        const row = rows[r] || [];
+        const week1 = struct.markerCol != null ? markerWeek(row[struct.markerCol]) : null;
+        const rowsInPair = [r];
+        if (struct.markerCol != null && week1 !== 'denominator' && r + 1 <= blockEnd) {
+          if (markerWeek(rows[r + 1] ? rows[r + 1][struct.markerCol] : null) === 'denominator') rowsInPair.push(r + 1);
+        }
+        let periodLabel = null;
+        if (struct.periodCol != null && row[struct.periodCol] !== null && row[struct.periodCol] !== undefined && row[struct.periodCol] !== '') {
+          periodLabel = Number(row[struct.periodCol]) || null;
+        }
+        const periodIdx = periodLabel ? periodLabel - 1 : periodCounter;
+        let timeLabel = struct.timeCol != null && typeof row[struct.timeCol] === 'string' && row[struct.timeCol].trim() ? row[struct.timeCol].trim() : null;
+        if (!timeLabel) timeLabel = EXCEL_TIME_SLOTS[periodIdx] || `Пара ${periodIdx + 1}`;
+        rowsInPair.forEach((rr, i) => {
+          const a = excelResolveAnchor(merges, rr, groupCol);
+          const raw = rows[a.r] ? rows[a.r][a.c] : null;
+          const parsed = excelParseLessonCellUniversal(raw);
+          if (!parsed) return;
+          const week = rowsInPair.length === 2 ? (i === 0 ? 'numerator' : 'denominator') : (week1 || 'both');
+          lessons.push({ id: uid(), day: d + 1, week, kind: parsed.kind, time: timeLabel, place: parsed.place, title: parsed.subject });
+        });
+        periodCounter++; r += rowsInPair.length;
+      }
+    }
+    return lessons;
+  }
+
   function excelFindGroups(workbook) {
     const found = [];
     workbook.SheetNames.forEach(sheetName => {
       const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: null, raw: true });
-      const header = rows[0] || [];
-      header.forEach((val, col) => { if (col >= 2 && typeof val === 'string' && val.trim()) found.push({ sheet: sheetName, col, group: val.trim() }); });
+      const layout = excelDetectSheetLayout(rows);
+      if (!layout) return;
+      layout.groupCols.forEach(col => {
+        const label = rows[layout.headerRow][col];
+        found.push({ sheet: sheetName, col, group: String(label).trim(), format: layout.format, headerRow: layout.headerRow, layout });
+      });
     });
     return found;
   }
-  function excelExtractLessons(workbook, sheetName, groupCol) {
+
+  // Формат A — багаторядкові комірки (предмет / викладач / аудиторія кожен на своєму рядку).
+  function excelExtractLessonsA(workbook, sheetName, groupCol) {
     const sheet = workbook.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: true });
     const merges = sheet['!merges'] || [];
@@ -572,6 +787,55 @@
     return lessons;
   }
 
+  // Формат B — один рядок тексту на пару: "[л. ]Предмет [аудиторія] [(Викладач)]".
+  function excelSplitSubjectRoomB(s) {
+    const m = s.match(/(а\.\s?\S|ауд\.|лаб\.?\s?\d|лаб\s*,|конференц|гурт\s?№|к\.\s?\d)/i);
+    if (!m) return { subject: s.trim(), room: '' };
+    return { subject: s.slice(0, m.index).trim().replace(/[-,]\s*$/, '').trim(), room: s.slice(m.index).trim() };
+  }
+  function excelExtractLessonsB(workbook, sheetName, groupCol, headerRowIdx) {
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: true });
+    const merges = sheet['!merges'] || [];
+    const lessons = [];
+    const addLesson = (raw, day, period, week) => {
+      if (raw === null || raw === undefined) return;
+      let s = String(raw).replace(/\s+/g, ' ').trim();
+      if (!s || EXCEL_SKIP_VALUES_B.includes(s.toLowerCase())) return;
+      let teacher = '';
+      const tm = s.match(/\(([^()]+)\)\s*$/);
+      if (tm) { teacher = tm[1].trim(); s = s.slice(0, tm.index).trim(); }
+      let kind = 'Практика';
+      const lm = s.match(/^л\.?\s+/i);
+      if (lm) { kind = 'Лекція'; s = s.slice(lm[0].length).trim(); }
+      const { subject, room } = excelSplitSubjectRoomB(s);
+      if (!subject) return;
+      const place = teacher ? (room ? `${room} · ${teacher}` : teacher) : room;
+      lessons.push({ id: uid(), day: day + 1, week, kind, time: EXCEL_TIME_SLOTS[period], place, title: subject });
+    };
+    const blockSize = 11, dataStart = headerRowIdx + 1;
+    for (let day = 0; day < 5; day++) {
+      const dayStart = dataStart + day * blockSize;
+      for (let period = 0; period < EXCEL_TIME_SLOTS.length; period++) {
+        const rCh = dayStart + period * 2, rZn = rCh + 1;
+        const aCh = excelResolveAnchor(merges, rCh, groupCol), aZn = excelResolveAnchor(merges, rZn, groupCol);
+        const sameCell = aCh.r === aZn.r && aCh.c === aZn.c;
+        const valCh = rows[aCh.r] ? rows[aCh.r][aCh.c] : null;
+        const valZn = rows[aZn.r] ? rows[aZn.r][aZn.c] : null;
+        if (sameCell) addLesson(valCh, day, period, 'both');
+        else { addLesson(valCh, day, period, 'numerator'); addLesson(valZn, day, period, 'denominator'); }
+      }
+    }
+    return lessons;
+  }
+
+  // Диспетчер: вибирає парсер відповідно до формату, визначеного для групи в excelFindGroups.
+  function excelExtractLessons(workbook, g) {
+    if (g.format === 'C') return excelExtractLessonsC(workbook, g.sheet, g.col, g.layout);
+    if (g.format === 'B') return excelExtractLessonsB(workbook, g.sheet, g.col, g.headerRow);
+    return excelExtractLessonsA(workbook, g.sheet, g.col);
+  }
+
   let excelWorkbook = null, excelGroups = [];
   // Не даємо цій майстер-формі впасти у загальний обробник submit нижче (типи lesson/task/file) —
   // тут немає кнопки type="submit", але про всяк випадок глушимо подію ще на фазі занурення.
@@ -600,14 +864,14 @@
     $('#entry-form').innerHTML = `<div class="form-grid"><div class="field full"><label for="excel-group-select">Твоя група</label><select id="excel-group-select">${excelGroups.map((g, i) => `<option value="${i}">${safe(g.sheet)} — ${safe(g.group)}</option>`).join('')}</select></div><p style="color:var(--muted);font-size:12px;line-height:1.5">Знайдено <b id="excel-count" style="color:var(--text)"></b> пар для обраної групи. Імпорт замінить поточний розклад пар — завдання й матеріали лишаться без змін.</p></div><button type="button" class="primary-button save" id="excel-confirm-btn">Імпортувати розклад →</button>`;
     const updateCount = () => {
       const g = excelGroups[Number($('#excel-group-select').value)];
-      const count = excelExtractLessons(excelWorkbook, g.sheet, g.col).length;
+      const count = excelExtractLessons(excelWorkbook, g).length;
       $('#excel-count').textContent = `${count}`;
     };
     $('#excel-group-select').addEventListener('change', updateCount);
     updateCount();
     $('#excel-confirm-btn').addEventListener('click', () => {
       const g = excelGroups[Number($('#excel-group-select').value)];
-      const lessons = excelExtractLessons(excelWorkbook, g.sheet, g.col);
+      const lessons = excelExtractLessons(excelWorkbook, g);
       if (!lessons.length && !confirm('Для цієї групи не знайдено жодної пари. Все одно очистити поточний розклад?')) return;
       if (lessons.length && !confirm(`Імпортувати ${lessons.length} пар для групи ${g.group}? Поточний розклад пар буде замінено.`)) return;
       data.lessons = lessons; save(); closeModal(); renderAll(); showPage('schedule');
