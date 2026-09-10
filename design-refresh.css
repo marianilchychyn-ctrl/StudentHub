@@ -1,0 +1,226 @@
+/* =====================================================================
+   DESIGN REFRESH — фінальний шар: фікс верстки розкладу + загальне
+   візуальне доопрацювання сайту. Підключається останнім, тож акуратно
+   доповнює/уточнює всі попередні шари, не чіпаючи їхню структуру.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   ФІКС: час пари в картках розкладу (.schedule-card) наїжджав на назву
+   -----------------------------------------------------------------------
+   Раніше час рендерився як <span class="time"> — той самий клас, що й на
+   головній (.lesson-row), де в style.css йому задано min-width:87px. Це
+   доречно для .lesson-row (flex, є куди стиснутись), але в .schedule-card
+   перша grid-колонка на вузьких екранах звужується до 75px (610px) і
+   62px (400px) — вужче за ці 87px. Grid-елемент не стискається нижче
+   свого min-width, тож час вилазив за межі колонки й лягав поверх назви
+   пари. Тепер час рендериться в app.js окремим блоком .time-badge (без
+   успадкованого min-width:87px) — початок і кінець пари показані двома
+   рядками, кожен з яких завжди вужчий за найменшу колонку.
+   ======================================================================= */
+.schedule-card {
+  grid-template-columns: 74px 1fr auto auto;
+  position: relative;
+}
+.schedule-card::before {
+  content: '';
+  position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--blue); opacity: .5;
+  transition: opacity .2s ease;
+}
+.schedule-card.practice::before { background: var(--green); }
+.schedule-card.lab::before { background: var(--violet); }
+.schedule-card:hover::before { opacity: 1; }
+
+.time-badge {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; min-width: 0; width: 100%;
+  background: #46b6ff14; border: 1px solid #46b6ff30; border-radius: 9px;
+  padding: 9px 4px;
+}
+.schedule-card.practice .time-badge { background: #42efad14; border-color: #42efad30; }
+.schedule-card.lab .time-badge { background: #ad8dff16; border-color: #ad8dff32; }
+.time-badge .t-start, .time-badge .t-end {
+  font: 700 12px 'DM Mono'; color: var(--blue); white-space: nowrap; line-height: 1;
+}
+.schedule-card.practice .time-badge .t-start,
+.schedule-card.practice .time-badge .t-end { color: var(--green); }
+.schedule-card.lab .time-badge .t-start,
+.schedule-card.lab .time-badge .t-end { color: var(--violet); }
+.time-badge .t-end { font-weight: 500; font-size: 11px; opacity: .78; }
+.time-badge .t-sep { width: 14px; height: 1px; background: currentColor; opacity: .35; }
+.time-badge .t-solo { font-size: 13px; }
+
+@media (max-width: 610px) {
+  .schedule-card { grid-template-columns: 58px 1fr auto; gap: 10px; }
+  .time-badge { padding: 7px 2px; border-radius: 8px; gap: 3px; }
+  .time-badge .t-start, .time-badge .t-end { font-size: 10.5px; }
+  .time-badge .t-solo { font-size: 11.5px; }
+}
+@media (max-width: 400px) {
+  .schedule-card { grid-template-columns: 50px 1fr auto; }
+  .time-badge { padding: 6px 2px; gap: 2px; }
+  .time-badge .t-start, .time-badge .t-end { font-size: 9.5px; }
+  .time-badge .t-sep { width: 10px; }
+}
+
+/* =========================================================================
+   ЗАГАЛЬНЕ ОНОВЛЕННЯ ДИЗАЙНУ САЙТУ
+   =========================================================================
+   М'якші, сучасніші заокруглення карток; трохи більше "повітря" і глибини;
+   акуратні деталі в типографіці, кнопках і активних станах — без зміни
+   структури розмітки чи логіки застосунку.
+   ========================================================================= */
+
+/* --- Заокруглення карток: трохи м'якіше й сучасніше ---------------------- */
+.metrics article, .panel, .task-card, .file-card, .schedule-card,
+.faq-item, .weekend-panel, .empty, .academic-empty, .next-lesson {
+  border-radius: 14px;
+}
+.hero { border-radius: 20px; }
+.metric-icon, .file-icon { border-radius: 11px; }
+.modal { border-radius: 18px; }
+.day-tab { border-radius: 13px; }
+
+/* --- Заголовок сторінки: легкий градієнт для преміальнішого вигляду ------ */
+h1 {
+  background: linear-gradient(90deg, #ffffff, #cfe7ff 70%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* --- Логотип: тонке сяйво навколо коду, охайніший рітм ------------------- */
+.logo-code { transition: box-shadow .3s ease; }
+.logo:hover .logo-code { box-shadow: 0 0 26px #46b6ff80; }
+
+/* --- Індикатор "SYSTEM ONLINE": живе, а не статичне світло --------------- */
+.system span { animation: sysPulse 2.4s ease-in-out infinite; }
+@keyframes sysPulse { 0%, 100% { box-shadow: 0 0 10px var(--green); } 50% { box-shadow: 0 0 4px var(--green); opacity: .7; } }
+
+/* --- Метрики: м'яке сяйво навколо іконки за наведення --------------------- */
+.metrics article { transition: transform .2s ease, border-color .2s ease; }
+.metrics article:hover { transform: translateY(-2px); border-color: rgba(70,182,255,.55); }
+.metric-icon { transition: box-shadow .25s ease; }
+.metrics article:hover .metric-icon.blue { box-shadow: 0 0 18px rgba(70,182,255,.35); }
+.metrics article:hover .metric-icon.green { box-shadow: 0 0 18px rgba(66,239,173,.32); }
+.metrics article:hover .metric-icon.violet { box-shadow: 0 0 18px rgba(173,141,255,.32); }
+
+/* --- Активні пігулки (день/фільтр/тиждень): градієнт замість плаского кольору --- */
+.day-tab.active, .filter.active {
+  background: linear-gradient(135deg, #1c5a82, #17415f);
+  border-color: #4fa5d6;
+}
+.week-choice.active {
+  background: linear-gradient(135deg, #57f5bf, var(--green));
+}
+
+/* --- Кнопки: трохи виразніша глибина при натисканні ----------------------- */
+.primary-button, .outline-button, .data-btn, .donate-button {
+  transition-property: transform, box-shadow, filter, background, border-color, color;
+}
+.primary-button:active, .outline-button:active { transform: translateY(0) scale(.98); }
+
+/* --- FAQ: той самий охайний шеврон, що й у панелях розкладу, замість +/– --- */
+.faq-item summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; list-style: none; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::before, .faq-item[open] summary::before { content: none; }
+.faq-item summary::after {
+  content: ''; width: 8px; height: 8px; flex: none;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg); transition: transform .25s ease, border-color .2s ease;
+}
+.faq-item[open] summary::after { transform: rotate(-135deg); border-color: var(--blue); }
+.faq-item:hover summary::after { border-color: var(--blue); }
+.faq-item { transition: border-color .2s ease, background .2s ease; }
+.faq-item:hover { border-color: rgba(70,182,255,.4); background: #0f1a2a; }
+.faq-item[open] > p { animation: detailsIn .25s ease both; }
+
+/* --- Кнопка підтримати: легкий рух сяйва, щоб привертала увагу без різкості --- */
+.donate-button { position: relative; overflow: hidden; }
+.donate-button::after {
+  content: ''; position: absolute; inset: -30% -70%;
+  transform: rotate(25deg) translateX(-70%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+  transition: transform .5s ease;
+}
+.donate-button:hover::after { transform: rotate(25deg) translateX(82%); }
+
+/* --- Порожні стани: тонка пульсація іконки замість статичного кола -------- */
+.empty span, .academic-empty span, .pair-timer .timer-empty span {
+  animation: emptyPulse 2.6s ease-in-out infinite;
+}
+@keyframes emptyPulse { 0%, 100% { opacity: .7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
+
+/* --- Модалка: скляний блюр підкладки замість суцільного кольору ----------- */
+.modal-wrap { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.close { transition: background .2s ease, color .2s ease, transform .15s ease, border-radius .2s ease; }
+
+/* --- Панелі-інструменти (details): легке підняття за наведення ------------ */
+details.panel { transition: border-color .2s ease; }
+details.panel:hover { border-color: rgba(77,102,138,.85); }
+
+/* =========================================================================
+   ФАЙЛОВІ ІНПУТИ: замість голого системного контролу — стилізована зона
+   =========================================================================
+   Стосується вибору Excel-файлу («Розклад з Excel») і PDF у матеріалах —
+   обидва мають клас .file-input. Раніше вибір Excel-файлу рендерився без
+   цього класу і виглядав як голий системний контрол платформи; тепер це
+   акуратна картка-дропзона з кнопкою в стилі застосунку та плавним ефектом
+   при наведенні й фокусі.
+   ========================================================================= */
+.file-input {
+  position: relative;
+  transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .15s ease;
+  cursor: pointer;
+}
+.file-input:hover { border-color: var(--blue) !important; background: #0d1826; }
+.file-input:focus-visible { box-shadow: var(--focus-ring, 0 0 0 3px rgba(70,182,255,.35)); }
+.file-input:active { transform: scale(.995); }
+.file-input::file-selector-button {
+  transition: filter .2s ease, transform .15s ease, box-shadow .2s ease;
+  cursor: pointer;
+}
+.file-input:hover::file-selector-button { filter: brightness(1.12); box-shadow: 0 0 16px rgba(70,182,255,.35); }
+.file-input:active::file-selector-button { transform: scale(.95); }
+
+/* =========================================================================
+   ІНСТРУМЕНТИ ТАБЛИЦІ «ГРАФІК НАВЧАННЯ»: живі кнопки й акуратний скрол
+   =========================================================================
+   «+ Додати рядок» / «Очистити семестр» були голими текстовими
+   посиланнями (.link-button) — тепер це компактні кнопки-пігулки з
+   іконкою, у стилі решти застосунку, плюс тонкий кастомний скролбар і
+   легке "згасання" країв таблиці, щоб було видно, що вона прокручується.
+   ========================================================================= */
+.academic-actions { gap: 8px; }
+.academic-actions .link-button {
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 13px;
+  background: #101827; color: var(--muted);
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: .2s ease;
+}
+.academic-actions .academic-add-row {
+  color: var(--green); border-color: rgba(66,239,173,.35); background: rgba(66,239,173,.06);
+}
+.academic-actions .academic-add-row:hover {
+  border-color: var(--green); color: #baffe2; background: rgba(66,239,173,.14);
+  box-shadow: 0 0 16px rgba(66,239,173,.2); transform: translateY(-1px);
+}
+.academic-actions .academic-clear-semester:hover {
+  border-color: #ff8a8a; color: #ffb3b3; background: rgba(255,111,111,.1);
+  box-shadow: 0 0 16px rgba(255,111,111,.16); transform: translateY(-1px);
+}
+.academic-actions .link-button:active { transform: translateY(0) scale(.97); }
+
+.academic-scroll {
+  scrollbar-width: thin; scrollbar-color: rgba(70,182,255,.45) transparent;
+  scroll-behavior: smooth;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+}
+.academic-scroll::-webkit-scrollbar { height: 7px; }
+.academic-scroll::-webkit-scrollbar-track { background: transparent; }
+.academic-scroll::-webkit-scrollbar-thumb { background: rgba(70,182,255,.4); border-radius: 99px; }
+.academic-scroll::-webkit-scrollbar-thumb:hover { background: rgba(70,182,255,.65); }
+
+@media (prefers-reduced-motion: reduce) {
+  .system span, .empty span, .academic-empty span, .pair-timer .timer-empty span { animation: none; }
+}

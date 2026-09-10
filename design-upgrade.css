@@ -72,13 +72,7 @@ body::after { content:""; position:fixed; width:40vw; height:40vw; max-width:570
 #search-tasks { }
 .page#tasks .search { margin-bottom: 17px; }
 
-/* --- Автори, Підтримка, Донат --- */
-.author-card { display: flex; gap: 18px; align-items: center; padding: 24px; }
-.author-avatar { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--green)); color: #06120e; display: grid; place-items: center; font: 800 17px Manrope; flex: none; }
-.author-card h3 { margin: 0 0 4px; font-size: 16px; letter-spacing: -.3px; }
-.author-card p { margin: 0 0 14px; color: var(--muted); font-size: 12px; }
-.author-card .primary-button { text-decoration: none; display: inline-block; }
-@media (max-width: 610px) { .author-card { flex-direction: column; text-align: center; } }
+/* --- Підтримка, Донат --- */
 
 .faq-list { display: grid; gap: 10px; margin-top: 4px; }
 .faq-item { border: 1px solid var(--line); border-radius: 9px; padding: 13px 16px; background: #0d1522; }
@@ -98,8 +92,8 @@ body::after { content:""; position:fixed; width:40vw; height:40vw; max-width:570
 .donate-button:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
 /* --- Таймер пар --- */
-.pair-timer { margin: 18px 0; padding: 20px 22px; position: relative; overflow: hidden; border-color: rgba(70,182,255,.4); }
-.pair-timer.active { border-color: rgba(66,239,173,.5); background: linear-gradient(125deg, rgba(66,239,173,.07), rgba(16,24,39,.85)); }
+.pair-timer { margin: 18px 0; padding: 20px 22px; position: relative; overflow: hidden; border-color: rgba(70,182,255,.4); box-shadow: 0 0 26px rgba(70,182,255,.12), 0 13px 33px #00000029; transition: box-shadow .3s ease, border-color .3s ease; }
+.pair-timer.active { border-color: rgba(66,239,173,.55); background: linear-gradient(125deg, rgba(66,239,173,.07), rgba(16,24,39,.85)); box-shadow: 0 0 40px rgba(66,239,173,.22), 0 13px 33px #00000029; animation: timerGlow 2.6s ease-in-out infinite; }
 .pair-timer .timer-head { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
 .pair-timer .timer-head b { font: 700 11px 'DM Mono'; letter-spacing: .5px; color: var(--blue); text-transform: uppercase; }
 .pair-timer.active .timer-head b { color: var(--green); }
@@ -108,7 +102,7 @@ body::after { content:""; position:fixed; width:40vw; height:40vw; max-width:570
 .pair-timer h3 { font-size: 19px; letter-spacing: -.3px; margin-bottom: 4px; }
 .pair-timer .timer-place { color: var(--muted); font-size: 12px; margin: 0 0 16px; }
 .pair-timer .timer-bar { height: 8px; border-radius: 99px; background: #0d1520; border: 1px solid var(--line); overflow: hidden; margin-bottom: 14px; }
-.pair-timer .timer-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--blue), var(--green)); box-shadow: 0 0 14px rgba(66,239,173,.35); transition: width 1s linear; }
+.pair-timer .timer-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--blue), var(--green)); box-shadow: 0 0 20px rgba(66,239,173,.65), 0 0 6px rgba(66,239,173,.9); transition: width 1s linear; }
 .pair-timer .timer-row { display: flex; align-items: baseline; justify-content: space-between; }
 .pair-timer .timer-row span { font: 700 11px 'DM Mono'; color: var(--muted); letter-spacing: .3px; }
 .pair-timer .timer-count { font: 800 26px 'DM Mono'; letter-spacing: .5px; color: var(--text); font-variant-numeric: tabular-nums; }

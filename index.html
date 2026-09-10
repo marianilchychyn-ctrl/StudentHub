@@ -5,23 +5,23 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#070b14">
   <meta name="description" content="Student Hub — розклад, дедлайни та матеріали">
+  <!-- Google Analytics (GA4) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XMM9TM8L1K"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XMM9TM8L1K');
+  </script>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="design-upgrade.css">
   <link rel="stylesheet" href="polish.css">
   <link rel="stylesheet" href="refinements.css">
+  <link rel="stylesheet" href="design-refresh.css">
   <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>Student Hub</title>
-
-  <!-- Google Analytics (GA4) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ERN712Y7WV"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-ERN712Y7WV');
-  </script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Перейти до основного вмісту</a>
@@ -36,12 +36,12 @@
         <button class="nav-btn" data-page="tasks"><i aria-hidden="true">✓</i> Завдання <em id="task-counter">0</em></button>
         <button class="nav-btn" data-page="files"><i aria-hidden="true">▤</i> Матеріали</button>
         <button class="nav-btn" data-page="academic"><i aria-hidden="true">▥</i> Графік навчання</button>
-        <button class="nav-btn" data-page="authors"><i aria-hidden="true">☺</i> Автори</button>
         <button class="nav-btn" data-page="support"><i aria-hidden="true">?</i> Підтримка</button>
       </nav>
       <div class="data-actions">
         <button class="data-btn" id="export-data" title="Зберегти резервну копію"><span aria-hidden="true">⇩</span> Експорт</button>
         <button class="data-btn" id="import-data" title="Відновити з файлу"><span aria-hidden="true">⇧</span> Імпорт</button>
+        <button class="data-btn" id="import-excel-btn" title="Підтягнути розклад з Excel за групою"><span aria-hidden="true">📊</span> Розклад з Excel</button>
         <input type="file" id="import-input" accept="application/json,.json" hidden>
       </div>
       <p class="system"><span aria-hidden="true"></span> SYSTEM ONLINE</p>
@@ -151,29 +151,7 @@
           <span>СЕМЕСТР:</span><button class="week-choice semester-choice" data-semester="autumn" aria-pressed="false">Осінній</button><button class="week-choice semester-choice" data-semester="spring" aria-pressed="false">Весняний</button>
         </div>
         <div id="academic-content"></div>
-        <p class="hint academic-source">Це власний, порожній макет графіка — впиши свої дані в таблицю вище. Зміни зберігаються лише локально, у твоєму браузері.</p>
-      </section>
-
-      <section class="page" id="authors">
-        <div class="section-title"><div><p class="micro">TEAM</p><h2>Автори проєкту</h2></div></div>
-        <div class="home-grid">
-          <article class="panel author-card">
-            <span class="author-avatar" aria-hidden="true">ВК</span>
-            <div>
-              <h3>Копцюх Володимир</h3>
-              <p>Розробник проєкту Student Hub</p>
-              <a class="primary-button" href="https://t.me/Koptsyh" target="_blank" rel="noopener"><span aria-hidden="true">✈</span> Написати в Telegram</a>
-            </div>
-          </article>
-          <article class="panel author-card">
-            <span class="author-avatar" aria-hidden="true">МІ</span>
-            <div>
-              <h3>Ільчишин Мар'ян</h3>
-              <p>Розробник проєкту Student Hub</p>
-              <a class="primary-button" href="https://t.me/marjan4_uk" target="_blank" rel="noopener"><span aria-hidden="true">✈</span> Написати в Telegram</a>
-            </div>
-          </article>
-        </div>
+        <p class="hint academic-source">Це власний, редагований графік — впиши свої дані в таблицю вище кнопкою «+ Додати рядок». Зміни зберігаються лише локально, у твоєму браузері.</p>
       </section>
 
       <section class="page" id="support">
@@ -208,6 +186,7 @@
   <div id="print-schedule-root" class="print-only" aria-hidden="true"></div>
   <div class="modal-wrap" id="modal-wrap" aria-hidden="true"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="close" id="modal-close" aria-label="Закрити">×</button><p class="micro" id="modal-kicker">NEW ENTRY</p><h2 id="modal-title">Новий запис</h2><form id="entry-form"></form></section></div>
   <template id="empty-state"><div class="empty"><span aria-hidden="true">◌</span><b>Тут поки порожньо</b><p>Додай перший запис кнопкою вище.</p></div></template>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
   <script src="app.js" defer></script>
 </body>
 </html>

@@ -4,9 +4,7 @@
   const $$ = selector => [...document.querySelectorAll(selector)];
   const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
   const fullDays = ['Неділя', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П’ятниця', 'Субота'];
-  const ACADEMIC_VALUE_COLUMNS = 9;
-  const emptyAcademicRow = () => ({ course: '', groups: '', values: Array(ACADEMIC_VALUE_COLUMNS).fill('') });
-  const seed = { lessons: [], tasks: [], files: [], academic: { autumn: [emptyAcademicRow()], spring: [emptyAcademicRow()] } };
+  const seed = { lessons: [], tasks: [], files: [], academic: { autumn: [], spring: [] } };
   const clone = value => JSON.parse(JSON.stringify(value));
 
   function load() {
@@ -16,7 +14,7 @@
       // Сумісність зі збереженнями до появи власного (редагованого користувачем) графіка навчального процесу.
       if (!saved.academic || typeof saved.academic !== 'object') saved.academic = clone(seed.academic);
       ['autumn', 'spring'].forEach(semester => {
-        if (!Array.isArray(saved.academic[semester])) saved.academic[semester] = clone(seed.academic[semester]);
+        if (!Array.isArray(saved.academic[semester])) saved.academic[semester] = [];
       });
       return saved;
     } catch { return clone(seed); }
@@ -196,6 +194,15 @@
     return `<div class="lesson-row" data-edit-lesson="${item.id}" title="Клацни, щоб редагувати"><span class="time">${safe(item.time)}</span><div class="info"><b>${safe(item.title)}</b><small>${safe(item.place)}</small></div><span class="type ${kindClass(item.kind)}">${safe(item.kind)}</span></div>`;
   }
   function kindClass(kind) { return kind === 'Практика' ? 'practice' : kind === 'Лабораторна' ? 'lab' : ''; }
+  // Розбиває час пари на початок/кінець для бейджа в картці розкладу — окремими
+  // рядками, а не одним довгим рядком, щоб час завжди влазив у свою колонку
+  // й ніколи не наїжджав на назву пари.
+  function timeBadge(text) {
+    const matches = [...String(text || '').matchAll(/(\d{1,2}):(\d{2})/g)];
+    if (matches.length >= 2) return `<span class="t-start">${matches[0][0]}</span><span class="t-sep" aria-hidden="true"></span><span class="t-end">${matches[1][0]}</span>`;
+    if (matches.length === 1) return `<span class="t-start t-solo">${matches[0][0]}</span>`;
+    return `<span class="t-start t-solo">${safe(text)}</span>`;
+  }
 
   function renderSchedule() {
     $$('.week-choice:not(.duration-choice):not(.semester-choice):not(.share-format-choice)').forEach(button => {
@@ -217,7 +224,7 @@
       return;
     }
     const lessons = data.lessons.filter(item => item.day === selectedDay && (!item.week || item.week === 'both' || item.week === selectedWeek)).sort((a, b) => a.time.localeCompare(b.time));
-    board.innerHTML = lessons.map(item => `<article class="schedule-card" data-edit-lesson="${item.id}" title="Клацни, щоб редагувати"><span class="time">${safe(item.time)}</span><div><b>${safe(item.title)}</b><p>${safe(item.place)}</p></div><span class="type ${kindClass(item.kind)}">${safe(item.kind)}</span><button class="delete" data-remove-lesson="${item.id}" title="Видалити" aria-label="Видалити пару «${safe(item.title)}»">×</button></article>`).join('');
+    board.innerHTML = lessons.map(item => `<article class="schedule-card ${kindClass(item.kind)}" data-edit-lesson="${item.id}" title="Клацни, щоб редагувати"><div class="time-badge">${timeBadge(item.time)}</div><div><b>${safe(item.title)}</b><p>${safe(item.place)}</p></div><span class="type ${kindClass(item.kind)}">${safe(item.kind)}</span><button class="delete" data-remove-lesson="${item.id}" title="Видалити" aria-label="Видалити пару «${safe(item.title)}»">×</button></article>`).join('');
     if (!lessons.length) showEmpty(board);
   }
 
@@ -298,7 +305,7 @@
   // Кнопка «+ Додати» в шапці: на сторінках, де є природна дія додавання,
   // веде саме до відповідної форми (пара / завдання / матеріал) замість
   // того, щоб завжди відкривати форму пари. На сторінках без такої дії
-  // (Графік навчання, Автори, Підтримка) кнопку ховаємо — там додавати нічого.
+  // (Графік навчання, Підтримка) кнопку ховаємо — там додавати нічого.
   const topbarAddConfig = {
     home: { modal: 'lesson', label: 'Додати пару' },
     schedule: { modal: 'lesson', label: 'Додати пару' },
@@ -323,7 +330,7 @@
       item.classList.toggle('active', isActive);
       if (isActive) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current');
     });
-    $('#heading').textContent = ({ home: 'Твій навчальний простір', schedule: 'Твій навчальний тиждень', tasks: 'Не пропусти дедлайни', files: 'Твоя база знань', academic: 'Знай терміни наперед', authors: 'Команда проєкту', support: 'Ми тут, щоб допомогти' })[page];
+    $('#heading').textContent = ({ home: 'Твій навчальний простір', schedule: 'Твій навчальний тиждень', tasks: 'Не пропусти дедлайни', files: 'Твоя база знань', academic: 'Знай терміни наперед', support: 'Ми тут, щоб допомогти' })[page];
     updateTopbarAddButton(page);
     setSidebarOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -488,12 +495,132 @@
       // Сумісність зі старими резервними копіями без графіка навчального процесу.
       if (!parsed.academic || typeof parsed.academic !== 'object') parsed.academic = clone(seed.academic);
       ['autumn', 'spring'].forEach(semester => {
-        if (!Array.isArray(parsed.academic[semester])) parsed.academic[semester] = clone(seed.academic[semester]);
+        if (!Array.isArray(parsed.academic[semester])) parsed.academic[semester] = [];
       });
       if (!confirm('Імпорт замінить поточні дані на дані з файлу. Продовжити?')) return;
       data = parsed; save(); renderAll();
     } catch { alert('Не вдалося прочитати файл — переконайся, що це резервна копія Student Hub.'); }
     event.target.value = '';
+  });
+
+  // --- Автопідбір розкладу з Excel за групою -----------------------------------------------
+  // Розрахований на офіційний шаблон розкладу (як у КНІТ): один аркуш на факультет, рядок 1 —
+  // назви груп починаючи з колонки C, колонка A — день тижня (об'єднані комірки, вертикальний
+  // текст), колонка B — час пари у форматі "08:30_ч" / "08:30_з" (ч = чисельник, з = знаменник).
+  // Після заголовка йде рівно 5 днів × 5 пар × 2 тижні = 50 рядків. Лекція на кілька груп одразу
+  // зберігається як об'єднана комірка на кілька колонок і/або обидва тижневих рядки — це і є
+  // ознака "пара щотижня" замість "лише в чисельнику/знаменнику".
+  const EXCEL_TIME_SLOTS = ['08:30', '10:20', '12:10', '14:30', '16:20'];
+
+  function excelNormalizeKind(raw) {
+    const s = (raw || '').toLowerCase();
+    if (s.includes('лек')) return 'Лекція';
+    if (s.includes('практ')) return 'Практика';
+    if (s.includes('лаборатор')) return 'Лабораторна';
+    const cleaned = (raw || '').trim().replace(/_+$/, '');
+    return cleaned || 'Лекція';
+  }
+  function excelEscapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function excelParseSubjectKind(line) {
+    const quoted = [...line.matchAll(/"([^"]*)"/g)].map(m => m[1]).filter(s => s.trim());
+    const kindRaw = quoted.length ? quoted[quoted.length - 1] : '';
+    let subject = line.replace(/"/g, ' ').trim();
+    if (kindRaw) subject = subject.replace(new RegExp('\\s*' + excelEscapeRe(kindRaw) + '\\s*$'), '').trim();
+    return { subject: subject.replace(/\s{2,}/g, ' ').trim(), kind: excelNormalizeKind(kindRaw) };
+  }
+  function excelResolveAnchor(merges, r, c) {
+    for (const m of merges) { if (r >= m.s.r && r <= m.e.r && c >= m.s.c && c <= m.e.c) return { r: m.s.r, c: m.s.c }; }
+    return { r, c };
+  }
+  function excelFindGroups(workbook) {
+    const found = [];
+    workbook.SheetNames.forEach(sheetName => {
+      const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: null, raw: true });
+      const header = rows[0] || [];
+      header.forEach((val, col) => { if (col >= 2 && typeof val === 'string' && val.trim()) found.push({ sheet: sheetName, col, group: val.trim() }); });
+    });
+    return found;
+  }
+  function excelExtractLessons(workbook, sheetName, groupCol) {
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null, raw: true });
+    const merges = sheet['!merges'] || [];
+    const lessons = [];
+    const addLesson = (raw, day, t, week) => {
+      if (!raw || raw === '---') return;
+      const lines = String(raw).split('\n').map(s => s.trim()).filter(Boolean);
+      if (lines.length < 2) return;
+      const room = lines[lines.length - 1];
+      const teacher = lines[lines.length - 2];
+      const subjLine = lines.length >= 3 ? lines[lines.length - 3] : lines[0];
+      const { subject, kind } = excelParseSubjectKind(subjLine);
+      if (!subject) return;
+      lessons.push({ id: uid(), day: day + 1, week, kind, time: EXCEL_TIME_SLOTS[t], place: teacher ? `${room} · ${teacher}` : room, title: subject });
+    };
+    for (let day = 0; day < 5; day++) {
+      const dayStart = 1 + day * 10;
+      for (let t = 0; t < EXCEL_TIME_SLOTS.length; t++) {
+        const rCh = dayStart + t * 2, rZn = rCh + 1;
+        const aCh = excelResolveAnchor(merges, rCh, groupCol), aZn = excelResolveAnchor(merges, rZn, groupCol);
+        const sameCell = aCh.r === aZn.r && aCh.c === aZn.c;
+        const valCh = rows[aCh.r] ? rows[aCh.r][aCh.c] : null;
+        const valZn = rows[aZn.r] ? rows[aZn.r][aZn.c] : null;
+        if (sameCell) addLesson(valCh, day, t, 'both');
+        else { addLesson(valCh, day, t, 'numerator'); addLesson(valZn, day, t, 'denominator'); }
+      }
+    }
+    return lessons;
+  }
+
+  let excelWorkbook = null, excelGroups = [];
+  // Не даємо цій майстер-формі впасти у загальний обробник submit нижче (типи lesson/task/file) —
+  // тут немає кнопки type="submit", але про всяк випадок глушимо подію ще на фазі занурення.
+  $('#entry-form').addEventListener('submit', event => {
+    if ($('#entry-form').dataset.type === 'excelImport') { event.preventDefault(); event.stopImmediatePropagation(); }
+  }, true);
+
+  function renderExcelStep1() {
+    $('#modal-kicker').textContent = 'РОЗКЛАД З EXCEL';
+    $('#modal-title').textContent = 'Імпорт розкладу за групою';
+    $('#entry-form').dataset.type = 'excelImport';
+    $('#entry-form').innerHTML = `<div class="form-grid"><div class="field full"><p style="color:var(--muted);font-size:13px;margin:0 0 10px;line-height:1.5">Обери Excel-файл з розкладом свого факультету. Після завантаження оберемо твою групу зі списку.</p><input type="file" id="excel-step-file" class="file-input" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div><p id="excel-status" style="color:var(--muted);font-size:12px;margin-top:8px"></p></div>`;
+    $('#excel-step-file').addEventListener('change', async event => {
+      const file = event.target.files[0]; if (!file) return;
+      $('#excel-status').textContent = 'Читаю файл…';
+      try {
+        const buf = await file.arrayBuffer();
+        excelWorkbook = XLSX.read(buf, { type: 'array' });
+        excelGroups = excelFindGroups(excelWorkbook);
+        if (!excelGroups.length) { $('#excel-status').textContent = 'Не вдалося знайти групи у файлі — перевір, що це офіційний шаблон розкладу.'; return; }
+        renderExcelStep2();
+      } catch { $('#excel-status').textContent = 'Не вдалося прочитати файл. Переконайся, що це коректний .xlsx.'; }
+    });
+  }
+  function renderExcelStep2() {
+    $('#entry-form').innerHTML = `<div class="form-grid"><div class="field full"><label for="excel-group-select">Твоя група</label><select id="excel-group-select">${excelGroups.map((g, i) => `<option value="${i}">${safe(g.sheet)} — ${safe(g.group)}</option>`).join('')}</select></div><p style="color:var(--muted);font-size:12px;line-height:1.5">Знайдено <b id="excel-count" style="color:var(--text)"></b> пар для обраної групи. Імпорт замінить поточний розклад пар — завдання й матеріали лишаться без змін.</p></div><button type="button" class="primary-button save" id="excel-confirm-btn">Імпортувати розклад →</button>`;
+    const updateCount = () => {
+      const g = excelGroups[Number($('#excel-group-select').value)];
+      const count = excelExtractLessons(excelWorkbook, g.sheet, g.col).length;
+      $('#excel-count').textContent = `${count}`;
+    };
+    $('#excel-group-select').addEventListener('change', updateCount);
+    updateCount();
+    $('#excel-confirm-btn').addEventListener('click', () => {
+      const g = excelGroups[Number($('#excel-group-select').value)];
+      const lessons = excelExtractLessons(excelWorkbook, g.sheet, g.col);
+      if (!lessons.length && !confirm('Для цієї групи не знайдено жодної пари. Все одно очистити поточний розклад?')) return;
+      if (lessons.length && !confirm(`Імпортувати ${lessons.length} пар для групи ${g.group}? Поточний розклад пар буде замінено.`)) return;
+      data.lessons = lessons; save(); closeModal(); renderAll(); showPage('schedule');
+      alert(`Розклад для групи ${g.group} імпортовано: ${lessons.length} пар.`);
+    });
+  }
+  $('#import-excel-btn').addEventListener('click', () => {
+    if (typeof XLSX === 'undefined') { alert('Не вдалося завантажити бібліотеку читання Excel. Перевір інтернет-з’єднання і спробуй ще раз.'); return; }
+    editing = { type: null, id: null };
+    lastFocusedElement = document.activeElement;
+    excelWorkbook = null; excelGroups = [];
+    renderExcelStep1();
+    $('#modal-wrap').classList.add('open'); $('#modal-wrap').setAttribute('aria-hidden', 'false');
   });
 
   // --- Синхронізація розкладу з Google Calendar / Apple Calendar (iCal) / Outlook через .ics ---
@@ -703,7 +830,9 @@
     } catch { /* пошкоджене або чуже посилання — тихо ігноруємо */ }
   }
 
-  // --- Графік навчального процесу: власний, редагований графік у вже готовому макеті таблиці ---
+  // --- Графік навчального процесу: власний, редагований графік у готовому макеті таблиці ---
+  const ACADEMIC_VALUE_COLUMNS = 9;
+  const emptyAcademicRow = () => ({ course: '', groups: '', values: Array(ACADEMIC_VALUE_COLUMNS).fill('') });
   const academicColumns = ['Курс', 'Групи', 'Теоретичне навчання', '1-й модульний тиждень', 'Теоретичне навчання', '2-й модульний тиждень', 'Семестровий контроль', 'Канікули', 'Практика', 'Дипломне проектування', 'Атестація (ДЕ, ККЗ, ДР/П, МР)'];
   const academicSemesterLabels = { autumn: 'Осінній семестр', spring: 'Весняний семестр' };
 

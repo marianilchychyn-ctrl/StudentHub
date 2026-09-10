@@ -147,6 +147,15 @@ a:focus-visible,
 .empty { animation: itemIn .35s ease both; }
 
 /* ---------------------------------------------------------------------
+   Пульсуюче сяйво навколо панелі таймера пари, поки пара триває —
+   робить активний стан помітнішим з першого погляду
+--------------------------------------------------------------------- */
+@keyframes timerGlow {
+  0%, 100% { box-shadow: 0 0 40px rgba(66,239,173,.22), 0 13px 33px #00000029; }
+  50% { box-shadow: 0 0 58px rgba(66,239,173,.4), 0 13px 33px #00000029; }
+}
+
+/* ---------------------------------------------------------------------
    Мобільне меню: підложка + плавна поява (замість різкого display:flex)
 --------------------------------------------------------------------- */
 .sidebar-backdrop {
@@ -248,7 +257,7 @@ body.no-scroll { overflow: hidden; }
   html { scroll-behavior: auto; }
   .page.active,
   .lesson-row, .deadline, .task-card, .file-card, .schedule-card,
-  .empty, .sidebar.open, .check:checked {
+  .empty, .sidebar.open, .check:checked, .pair-timer.active {
     animation: none !important;
   }
   .skip-link { transition: none; }

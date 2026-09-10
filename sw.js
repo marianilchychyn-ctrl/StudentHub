@@ -1,4 +1,4 @@
-const CACHE_NAME = 'student-hub-v12';
+const CACHE_NAME = 'student-hub-v16';
 const ASSETS = [
   './',
   './index.html',
@@ -6,9 +6,9 @@ const ASSETS = [
   './design-upgrade.css',
   './polish.css',
   './refinements.css',
+  './design-refresh.css',
   './app.js',
   './manifest.json',
-  './logo_kn.jpg',
   './icon-192.png',
   './icon-512.png'
 ];
@@ -34,10 +34,6 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
-
-  // Не чіпаємо кросдоменні запити (Google Analytics тощо) — хай браузер
-  // обробляє їх сам, без кешування в SW.
-  if (!request.url.startsWith(self.location.origin)) return;
 
   if (request.mode === 'navigate') {
     event.respondWith(
