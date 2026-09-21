@@ -224,3 +224,16 @@ details.panel:hover { border-color: rgba(77,102,138,.85); }
 @media (prefers-reduced-motion: reduce) {
   .system span, .empty span, .academic-empty span, .pair-timer .timer-empty span { animation: none; }
 }
+
+/* Кнопка "Оновити сторінку" у бічній панелі */
+#refresh-page-btn {
+  display: flex; align-items: center; gap: 8px;
+  color: #9cd8ff; border-color: rgba(70,182,255,.28); background: rgba(70,182,255,.05);
+}
+#refresh-page-btn span { display: inline-block; font-size: 13px; transition: transform .45s ease; }
+#refresh-page-btn:hover {
+  color: #dff4ff; border-color: rgba(70,182,255,.65); background: rgba(70,182,255,.12);
+  box-shadow: 0 0 16px rgba(70,182,255,.2); transform: translateY(-1px);
+}
+#refresh-page-btn:hover span { transform: rotate(180deg); }
+#refresh-page-btn:active { transform: translateY(0) scale(.97); }

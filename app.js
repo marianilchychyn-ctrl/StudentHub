@@ -487,6 +487,8 @@
     await shareOrDownloadFile(blob, `student-hub-backup-${todayISO()}.json`, 'Резервна копія Student Hub', 'Повна резервна копія даних Student Hub.');
   });
   $('#import-data').addEventListener('click', () => $('#import-input').click());
+  // Проста ручна перезавантаження сторінки.
+  $('#refresh-page-btn').addEventListener('click', () => window.location.reload());
   $('#import-input').addEventListener('change', async event => {
     const file = event.target.files[0]; if (!file) return;
     try {
