@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="polish.css">
   <link rel="stylesheet" href="refinements.css">
   <link rel="stylesheet" href="design-refresh.css">
+  <link rel="stylesheet" href="friends-promo.css">
   <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>Student Hub</title>
@@ -53,6 +54,30 @@
           <div><p class="micro glow">// STUDY MODE ACTIVE</p><h2>Плануй. Вчися.<br><strong>Досягай більшого.</strong></h2><p class="hero-copy">Розклад, домашні завдання й усі потрібні матеріали в одному цифровому хабі.</p><div class="hero-actions"><button class="primary-button" data-modal="lesson">Додати пару <b>→</b></button><a class="outline-button telegram-button" href="https://t.me/+tHk6q3rxZZE5NzE6" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">✈</span> Наш Telegram</a></div></div>
           <div class="terminal-art" aria-hidden="true"><span>{</span><div><small>SEMESTER</small><b>01</b><small>READY_</small></div><span>}</span></div>
         </article>
+
+        <!-- ============================================================
+             РЕКЛАМНИЙ БЛОК «НАШІ ДРУЗІ»
+             Посилання на Telegram змінюється лише в атрибуті href кнопки
+             .friends-promo-cta нижче. Логотип — файл friends-logo.jpg
+             (щоб замінити, поклади новий файл з тією ж назвою).
+             Тексти — прямо в цій розмітці.
+             Щоб прибрати блок повністю — видали цей <section>.
+             ============================================================ -->
+        <section class="friends-promo" aria-labelledby="friends-promo-title">
+          <img class="friends-promo-logo" src="friends-logo.jpg" width="96" height="96" alt="Логотип каналу LAB — Все для IT-студента" decoding="async">
+          <div class="friends-promo-body">
+            <p class="friends-promo-badge">НАШІ ДРУЗІ</p>
+            <h2 id="friends-promo-title">Потрібна допомога з лабораторними?</h2>
+            <p class="friends-promo-copy">Загляньте в Telegram-канал наших друзів, щоб дізнатися більше про їхні послуги.</p>
+          </div>
+          <a class="friends-promo-cta" href="https://t.me/helpstudentlabs" target="_blank" rel="noopener noreferrer">
+            <svg class="friends-promo-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M21.6 3.3 2.7 10.6c-1 .4-1 1.4-.2 1.6l4.8 1.5 1.8 5.7c.2.7 1 .9 1.5.4l2.6-2.3 4.9 3.6c.7.5 1.6.1 1.8-.7L23 4.7c.2-1-.6-1.7-1.4-1.4zM9.4 13.2l8.7-5.5c.4-.3.8.2.4.5l-7.1 6.5-.3 3-1.6-4.5z"/></svg>
+            <span>Перейти в Telegram</span>
+            <span class="friends-promo-arrow" aria-hidden="true">→</span>
+            <span class="sr-only-promo">(відкриється в новій вкладці)</span>
+          </a>
+        </section>
+
         <div class="metrics">
           <article><span class="metric-icon blue" aria-hidden="true">◫</span><div><b id="lessons-today">0</b><p>Пар сьогодні</p></div></article>
           <article><span class="metric-icon green" aria-hidden="true">✓</span><div><b id="tasks-open">0</b><p>Активних завдань</p></div></article>

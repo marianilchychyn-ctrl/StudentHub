@@ -1,0 +1,262 @@
+/* =====================================================================
+   FRIENDS PROMO — рекламний блок «НАШІ ДРУЗІ» під hero на головній.
+   Підключається останнім, використовує змінні палітри з style.css /
+   polish.css (--green, --blue, --text, --focus-ring) і не змінює
+   жодного існуючого правила.
+   Візуальна ідея: окрема «featured»-смуга — яскравіша бірюзово-зелена
+   поверхня, градієнтна неонова рамка, світлові акценти й крупна кнопка.
+   ===================================================================== */
+
+.friends-promo {
+  --fp-teal: #19d3da;
+  --fp-green: #42efad;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 36px;
+  margin: 40px 0 36px;
+  padding: 38px 44px;
+  border: 1.5px solid transparent;
+  border-radius: 26px;
+  /* поверхня (padding-box) + градієнтна рамка (border-box) */
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(25, 211, 218, .34), transparent 55%),
+    radial-gradient(90% 120% at 100% 100%, rgba(66, 239, 173, .30), transparent 60%),
+    linear-gradient(115deg, #0b4d63 0%, #0a6670 48%, #0c7b66 100%) padding-box,
+    linear-gradient(120deg, #7ff6ff, #19d3da 35%, #42efad 70%, #b6ffd9) border-box;
+  box-shadow:
+    0 0 0 1px rgba(66, 239, 173, .12),
+    0 0 46px rgba(25, 211, 218, .30),
+    0 0 110px rgba(66, 239, 173, .16),
+    0 28px 60px rgba(0, 0, 0, .45),
+    inset 0 1px 0 rgba(255, 255, 255, .22);
+  transition: box-shadow .3s ease, transform .3s ease;
+}
+
+/* м'яке сяйво зверху праворуч + тонка діагональна лінія-акцент */
+.friends-promo::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(circle at 88% -10%, rgba(255, 255, 255, .22), transparent 38%),
+    linear-gradient(105deg, transparent 58%, rgba(255, 255, 255, .07) 58.2%, transparent 72%);
+  pointer-events: none;
+}
+
+/* геометричний декор: тонка сітка + кільця, що розчиняються до центру */
+.friends-promo::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -70px;
+  top: -90px;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle at center, transparent 0 38px, rgba(255, 255, 255, .10) 38px 39px);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 0%, transparent 68%);
+  pointer-events: none;
+}
+
+.friends-promo:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 1px rgba(66, 239, 173, .2),
+    0 0 60px rgba(25, 211, 218, .42),
+    0 0 130px rgba(66, 239, 173, .22),
+    0 32px 66px rgba(0, 0, 0, .5),
+    inset 0 1px 0 rgba(255, 255, 255, .28);
+}
+
+.friends-promo-body { flex: 1; min-width: 0; }
+
+/* Логотип друзів */
+.friends-promo-logo {
+  flex: none;
+  display: block;
+  width: 118px;
+  height: 118px;
+  object-fit: cover;
+  border: 2px solid rgba(182, 255, 217, .75);
+  border-radius: 26px;
+  background: #0b1a30;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .45), 0 0 0 6px rgba(255, 255, 255, .06), 0 0 34px rgba(66, 239, 173, .45);
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+.friends-promo:hover .friends-promo-logo {
+  transform: scale(1.04) rotate(-2deg);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .45), 0 0 0 6px rgba(255, 255, 255, .09), 0 0 46px rgba(66, 239, 173, .65);
+}
+
+/* Бейдж «НАШІ ДРУЗІ» — яскрава «пігулка» */
+.friends-promo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 16px;
+  padding: 7px 15px 7px 12px;
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: 99px;
+  background: rgba(4, 22, 32, .55);
+  color: #b6ffd9;
+  font: 600 12px 'DM Mono', monospace;
+  letter-spacing: 2px;
+  box-shadow: 0 0 18px rgba(66, 239, 173, .35), inset 0 0 12px rgba(66, 239, 173, .12);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.friends-promo-badge::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fp-green);
+  box-shadow: 0 0 0 0 rgba(66, 239, 173, .7), 0 0 12px var(--fp-green);
+  animation: fp-pulse 2.4s ease-out infinite;
+}
+@keyframes fp-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(66, 239, 173, .65), 0 0 12px var(--fp-green); }
+  70%  { box-shadow: 0 0 0 9px rgba(66, 239, 173, 0), 0 0 12px var(--fp-green); }
+  100% { box-shadow: 0 0 0 0 rgba(66, 239, 173, 0), 0 0 12px var(--fp-green); }
+}
+
+.friends-promo h2 {
+  margin: 0 0 12px;
+  font-size: clamp(26px, 3.1vw, 38px);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -1px;
+  color: #fff;
+  text-shadow: 0 2px 22px rgba(4, 22, 32, .45);
+}
+
+.friends-promo-copy {
+  margin: 0;
+  max-width: 540px;
+  color: #d3f3f1;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Кнопка: велика, яскрава, з градієнтом, блиском і неоновим сяйвом */
+.friends-promo-cta {
+  position: relative;
+  overflow: hidden;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 18px 30px;
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(120deg, #7ff6ff 0%, #42efad 100%);
+  color: #04251c;
+  font: 800 17px Manrope, Arial, sans-serif;
+  letter-spacing: -.1px;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, .45) inset,
+    0 10px 28px rgba(4, 22, 32, .45),
+    0 0 34px rgba(66, 239, 173, .55);
+  transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+}
+/* діагональний блик, що пробігає по кнопці при наведенні */
+.friends-promo-cta::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -70%;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .75), transparent);
+  transform: skewX(-20deg);
+  transition: left .6s ease;
+  pointer-events: none;
+}
+.friends-promo-cta:hover {
+  transform: translateY(-3px) scale(1.03);
+  filter: brightness(1.05);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, .6) inset,
+    0 16px 34px rgba(4, 22, 32, .5),
+    0 0 52px rgba(66, 239, 173, .8);
+}
+.friends-promo-cta:hover::before { left: 130%; }
+.friends-promo-cta:active { transform: translateY(0) scale(.98); }
+.friends-promo-cta:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.friends-promo-icon { flex: none; display: block; width: 24px; height: 24px; }
+.friends-promo-arrow { display: inline-block; font-size: 20px; transition: transform .25s ease; }
+.friends-promo-cta:hover .friends-promo-arrow { transform: translateX(5px); }
+
+/* Підказка для екранних читачів: посилання відкривається в новій вкладці */
+.sr-only-promo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 1100px) {
+  .friends-promo { gap: 26px; padding: 32px 34px; }
+  .friends-promo-logo { width: 96px; height: 96px; border-radius: 22px; }
+  .friends-promo-cta { padding: 16px 24px; font-size: 16px; }
+}
+
+/* Планшет/вузькі екрани: кнопка переходить під текст */
+@media (max-width: 860px) {
+  .friends-promo { flex-wrap: wrap; }
+  .friends-promo-body { flex: 1 1 320px; }
+  .friends-promo-cta { flex: 1 1 100%; }
+}
+
+/* Мобільні: колонка, кнопка на всю ширину */
+@media (max-width: 610px) {
+  .friends-promo {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 20px;
+    margin: 30px 0 28px;
+    padding: 26px 20px 22px;
+    border-radius: 22px;
+  }
+  .friends-promo-logo { width: 76px; height: 76px; border-radius: 20px; }
+  .friends-promo-badge { font-size: 11px; margin-bottom: 12px; }
+  .friends-promo h2 { font-size: 26px; }
+  .friends-promo-copy { font-size: 14.5px; }
+  .friends-promo-cta { flex: none; width: 100%; min-height: 58px; font-size: 16px; }
+  .friends-promo::after { width: 300px; height: 300px; right: -90px; top: -100px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .friends-promo,
+  .friends-promo-logo,
+  .friends-promo-cta,
+  .friends-promo-cta::before,
+  .friends-promo-arrow { transition: none; }
+  .friends-promo-badge::before { animation: none; }
+  .friends-promo:hover,
+  .friends-promo:hover .friends-promo-logo,
+  .friends-promo-cta:hover,
+  .friends-promo-cta:active,
+  .friends-promo-cta:hover .friends-promo-arrow { transform: none; }
+}
