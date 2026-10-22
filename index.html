@@ -6,11 +6,10 @@
   <meta name="theme-color" content="#070b14">
   <meta name="description" content="Student Hub — розклад, дедлайни та матеріали">
   <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="design-upgrade.css">
-  <link rel="stylesheet" href="polish.css">
-  <link rel="stylesheet" href="refinements.css">
-  <link rel="stylesheet" href="design-refresh.css">
   <link rel="stylesheet" href="friends-promo.css">
   <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -24,12 +23,12 @@
     <aside class="sidebar" id="sidebar">
       <a class="logo" href="#" id="logo-home-link" data-page-link="home"><span class="logo-code" aria-hidden="true">&lt;/&gt;</span><span>STUDENT<br><b>HUB</b></span></a>
       <nav class="nav" aria-label="Навігація">
-        <button class="nav-btn active" data-page="home" aria-current="page"><i aria-hidden="true">▦</i> Огляд</button>
-        <button class="nav-btn" data-page="schedule"><i aria-hidden="true">◫</i> Розклад</button>
-        <button class="nav-btn" data-page="tasks"><i aria-hidden="true">✓</i> Завдання <em id="task-counter">0</em></button>
-        <button class="nav-btn" data-page="files"><i aria-hidden="true">▤</i> Матеріали</button>
-        <button class="nav-btn" data-page="academic"><i aria-hidden="true">▥</i> Графік навчання</button>
-        <button class="nav-btn" data-page="support"><i aria-hidden="true">?</i> Підтримка</button>
+        <button class="nav-btn active" data-page="home" aria-current="page" title="Огляд"><i aria-hidden="true">▦</i> Огляд</button>
+        <button class="nav-btn" data-page="schedule" title="Розклад"><i aria-hidden="true">◫</i> Розклад</button>
+        <button class="nav-btn" data-page="tasks" title="Завдання"><i aria-hidden="true">✓</i> Завдання <em id="task-counter">0</em></button>
+        <button class="nav-btn" data-page="files" title="Матеріали"><i aria-hidden="true">▤</i> Матеріали</button>
+        <button class="nav-btn" data-page="academic" title="Графік навчання"><i aria-hidden="true">▥</i> Графік навчання</button>
+        <button class="nav-btn" data-page="support" title="Підтримка"><i aria-hidden="true">?</i> Підтримка</button>
       </nav>
       <div class="data-actions">
         <button class="data-btn" id="export-data" title="Зберегти резервну копію"><span aria-hidden="true">⇩</span> Експорт</button>

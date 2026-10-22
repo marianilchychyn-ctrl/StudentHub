@@ -1,12 +1,8 @@
-const CACHE_NAME = 'student-hub-v20';
+const CACHE_NAME = 'student-hub-v21';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
-  './design-upgrade.css',
-  './polish.css',
-  './refinements.css',
-  './design-refresh.css',
   './friends-promo.css',
   './friends-logo.jpg',
   './app.js',
