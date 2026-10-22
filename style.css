@@ -556,6 +556,7 @@ main{margin-left:var(--sidebar-w);padding-bottom:calc(64px + env(safe-area-inset
 .file-card br{display:none}
 .file-card .delete{position:absolute;top:var(--space-2);right:var(--space-2)}
 .open-file{
+  display:inline-flex;align-items:center;text-decoration:none;
   min-height:var(--h-control);margin-top:var(--space-3);padding:0 16px;border:1px solid rgba(66,239,173,.4);border-radius:var(--r-md);
   background:var(--tint-green);color:var(--green);font-size:var(--fs-sm);font-weight:700;
   transition:background var(--t) var(--ease),border-color var(--t) var(--ease),transform var(--t-fast) var(--ease);

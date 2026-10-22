@@ -244,7 +244,7 @@
     const search = query.trim().toLowerCase();
     const files = data.files.filter(item => `${item.title} ${item.subject}`.toLowerCase().includes(search));
     const list = $('#file-list');
-    list.innerHTML = files.map(item => `<article class="file-card" data-edit-file="${item.id}" title="Клацни, щоб редагувати"><div class="file-icon" aria-hidden="true">${safe(item.type || 'PDF').slice(0, 1)}</div><strong>${safe(item.title)}</strong><p>${safe(item.description || 'Навчальний матеріал')}</p><span class="tag">${safe(item.subject)}</span>${item.pdfId ? `<br><button class="open-file" data-open-pdf="${item.pdfId}" aria-label="Відкрити PDF «${safe(item.title)}»">Відкрити PDF ↗</button>` : ''}<button class="delete" data-remove-file="${item.id}" title="Видалити" aria-label="Видалити матеріал «${safe(item.title)}»">×</button></article>`).join('');
+    list.innerHTML = files.map(item => `<article class="file-card" data-edit-file="${item.id}" title="Клацни, щоб редагувати"><div class="file-icon" aria-hidden="true">${safe(item.type || 'PDF').slice(0, 1)}</div><strong>${safe(item.title)}</strong><p>${safe(item.description || 'Навчальний матеріал')}</p><span class="tag">${safe(item.subject)}</span>${item.pdfId ? `<br><button class="open-file" data-open-pdf="${item.pdfId}" aria-label="Відкрити PDF «${safe(item.title)}»">Відкрити PDF ↗</button>` : ''}${/^https?:\/\//i.test(item.url || '') ? `<br><a class="open-file" href="${safe(item.url)}" target="_blank" rel="noopener noreferrer" aria-label="${item.type === 'VIDEO' ? 'Дивитися відео' : 'Відкрити посилання'} «${safe(item.title)}» (відкриється в новій вкладці)">${item.type === 'VIDEO' ? 'Дивитися відео' : 'Відкрити посилання'} ↗</a>` : ''}<button class="delete" data-remove-file="${item.id}" title="Видалити" aria-label="Видалити матеріал «${safe(item.title)}»">×</button></article>`).join('');
     if (!files.length) showEmpty(list);
   }
 
@@ -261,7 +261,7 @@
     },
     file: {
       title: 'Додати матеріал', kicker: 'KNOWLEDGE BASE',
-      html: (item) => `<div class="form-grid"><div class="field full"><label for="f-file-title">Назва матеріалу</label><input id="f-file-title" name="title" required placeholder="Наприклад, Конспект лекції №3" value="${safe(item?.title)}"></div><div class="field"><label for="f-file-subject">Предмет</label><input id="f-file-subject" name="subject" required placeholder="Назва предмета" value="${safe(item?.subject)}"></div><div class="field"><label for="f-file-type">Тип</label><select id="f-file-type" name="type"><option ${item?.type === 'PDF' ? 'selected' : ''}>PDF</option><option ${item?.type === 'NOTE' ? 'selected' : ''}>NOTE</option><option ${item?.type === 'LINK' ? 'selected' : ''}>LINK</option><option ${item?.type === 'VIDEO' ? 'selected' : ''}>VIDEO</option></select></div><div class="field full"><label for="f-file-pdf">Завантажити PDF (за бажанням)</label><input id="f-file-pdf" class="file-input" name="pdf" type="file" accept="application/pdf,.pdf">${item?.pdfId ? '<small class="hint">Уже прикріплено PDF. Обери новий файл, щоб замінити.</small>' : ''}</div><div class="field full"><label for="f-file-description">Опис</label><textarea id="f-file-description" name="description" placeholder="Коротко опиши матеріал">${safe(item?.description)}</textarea></div></div>`
+      html: (item) => `<div class="form-grid"><div class="field full"><label for="f-file-title">Назва матеріалу</label><input id="f-file-title" name="title" required placeholder="Наприклад, Конспект лекції №3" value="${safe(item?.title)}"></div><div class="field"><label for="f-file-subject">Предмет</label><input id="f-file-subject" name="subject" required placeholder="Назва предмета" value="${safe(item?.subject)}"></div><div class="field"><label for="f-file-type">Тип</label><select id="f-file-type" name="type"><option ${item?.type === 'PDF' ? 'selected' : ''}>PDF</option><option ${item?.type === 'NOTE' ? 'selected' : ''}>NOTE</option><option ${item?.type === 'LINK' ? 'selected' : ''}>LINK</option><option ${item?.type === 'VIDEO' ? 'selected' : ''}>VIDEO</option></select></div><div class="field full" id="f-file-pdf-field"><label for="f-file-pdf">Завантажити PDF (за бажанням)</label><input id="f-file-pdf" class="file-input" name="pdf" type="file" accept="application/pdf,.pdf">${item?.pdfId ? '<small class="hint">Уже прикріплено PDF. Обери новий файл, щоб замінити.</small>' : ''}</div><div class="field full" id="f-file-url-field" hidden><label for="f-file-url">Посилання</label><input id="f-file-url" name="url" inputmode="url" autocomplete="url" placeholder="https://..." value="${safe(item?.url)}"></div><div class="field full"><label for="f-file-description">Опис</label><textarea id="f-file-description" name="description" placeholder="Коротко опиши матеріал">${safe(item?.description)}</textarea></div></div>`
     }
   };
 
@@ -274,6 +274,23 @@
     return null;
   }
 
+  // У формі матеріалу показуємо лише те поле, що відповідає обраному типу:
+  // PDF — завантаження файлу; LINK / VIDEO — посилання; NOTE — лише опис.
+  function syncFileKind() {
+    const select = $('#f-file-type'); if (!select) return;
+    const kind = select.value;
+    const showUrl = kind === 'LINK' || kind === 'VIDEO';
+    $('#f-file-pdf-field').hidden = kind !== 'PDF';
+    $('#f-file-url-field').hidden = !showUrl;
+    $('#f-file-url').required = showUrl;
+  }
+  function normalizeUrl(raw) {
+    let value = String(raw || '').trim();
+    if (!value) return '';
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(value)) value = 'https://' + value;
+    try { const url = new URL(value); return /^https?:$/.test(url.protocol) ? url.href : ''; } catch { return ''; }
+  }
+
   let lastFocusedElement = null;
   function openModal(type, id = null) {
     const form = forms[type]; if (!form) return;
@@ -284,6 +301,7 @@
     $('#modal-title').textContent = item ? editTitles[type] : form.title;
     $('#entry-form').dataset.type = type;
     $('#entry-form').innerHTML = form.html(item) + `<button class="primary-button save" type="submit">${item ? 'Зберегти зміни →' : 'Зберегти →'}</button>`;
+    if (type === 'file') { $('#f-file-type').addEventListener('change', syncFileKind); syncFileKind(); }
     $('#modal-wrap').classList.add('open'); $('#modal-wrap').setAttribute('aria-hidden', 'false');
     requestAnimationFrame(() => { $('#entry-form').querySelector('input, select, textarea')?.focus(); });
   }
@@ -399,6 +417,7 @@
       else alert('Не вдалося відкрити файл — дозволь спливаючі вікна для цього сайту й спробуй ще раз.');
       return;
     }
+    if (event.target.closest('a[href]')) return; // посилання на матеріал відкривається, а не редагується
     if (event.target.closest('label')) return; // клік по назві завдання перемикає чекбокс, а не редагування
     const lessonCard = event.target.closest('[data-edit-lesson]');
     const taskCard = event.target.closest('[data-edit-task]');
@@ -425,10 +444,20 @@
     if (type === 'file') {
       const record = existing ? { ...existing } : { id: Date.now(), title: '', subject: '', type: 'PDF', description: '' };
       record.title = input.title; record.subject = input.subject; record.type = input.type; record.description = input.description || 'Навчальний матеріал.';
-      if (input.pdf && input.pdf.size) {
-        if (input.pdf.type && input.pdf.type !== 'application/pdf') return alert('Можна додати лише PDF-файл.');
-        if (existing?.pdfId) await deletePdf(existing.pdfId);
-        record.type = 'PDF'; record.pdfId = uid(); await persistPdf(record.pdfId, input.pdf);
+      if (input.type === 'LINK' || input.type === 'VIDEO') {
+        const url = normalizeUrl(input.url);
+        if (!url) return alert('Вкажи коректне посилання, що починається з http:// або https://');
+        record.url = url;
+      } else record.url = '';
+      if (input.type === 'PDF') {
+        if (input.pdf && input.pdf.size) {
+          if (input.pdf.type && input.pdf.type !== 'application/pdf') return alert('Можна додати лише PDF-файл.');
+          if (existing?.pdfId) await deletePdf(existing.pdfId);
+          record.type = 'PDF'; record.pdfId = uid(); await persistPdf(record.pdfId, input.pdf);
+        }
+      } else if (record.pdfId) {
+        if (!confirm('Прикріплений PDF буде видалено, бо тип матеріалу змінено. Продовжити?')) return;
+        await deletePdf(record.pdfId); record.pdfId = null;
       }
       if (existing) Object.assign(existing, record); else data.files.push(record);
     }
